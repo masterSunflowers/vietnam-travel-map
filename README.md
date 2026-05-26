@@ -2,50 +2,47 @@
 
 Travel View là dashboard full-stack để xem dữ liệu du lịch Việt Nam theo
 tỉnh/thành trên bản đồ tương tác. Ứng dụng hiện tập trung vào màn hình bản đồ
-quốc gia, metric selector, thống kê tổng quan, và panel chi tiết tỉnh/thành.
+quốc gia, bộ chọn metric, thống kê tổng quan và panel chi tiết tỉnh/thành.
 
-Nếu bạn là agent/coding assistant, hãy đọc thêm `AGENT.md` trước khi sửa dự án.
+Nếu bạn là agent/coding assistant, đọc thêm `AGENT.md` trước khi sửa dự án.
 
 ## Tech Stack
 
 | Phần | Công nghệ | Ghi chú |
 |---|---|---|
-| Frontend | Next.js 14, React 18, TypeScript | App Router, route chính `/` |
+| Frontend | Next.js 16, React 18, TypeScript | App Router, route chính `/` |
 | Map | D3 + SVG | Component đang dùng: `VietnamMapD3.tsx` |
 | Styling | Tailwind CSS + CSS custom | Style chính nằm trong `globals.css` |
 | Backend | FastAPI, SQLModel, Pydantic | Route đang nằm trực tiếp trong `app/main.py` |
 | Database | PostgreSQL | Schema `travel_view` |
 | Migration | Alembic | Migration chính trong `backend/alembic/versions/` |
-| Cache/service phụ | Redis | Có trong Docker Compose, chưa có service cache riêng |
+| Cache/service phụ | Redis | Có trong Docker Compose |
 | Local orchestration | Docker Compose | PostgreSQL, Redis, backend, frontend |
 
 ## Cấu Trúc Dự Án
 
 ```text
 travel-view/
-├── AGENT.md                         # Hướng dẫn ngắn cho agent
-├── README.md                        # Tài liệu vận hành dự án
-├── docker-compose.yml               # Full local stack
-├── .env.example                     # Biến môi trường mẫu cho Docker/local
-├── generate_map.py                  # Tạo GeoJSON từ boundary/point data
-├── merge_old_map.py                 # Merge map cũ thành 34 tỉnh/thành
-├── test_map.py                      # Kiểm tra bounding box GeoJSON
-├── supabase/snippets/travel-view.sql# Seed dữ liệu mẫu
+├── AGENT.md
+├── CONTRIBUTING.md
+├── README.md
+├── docker-compose.yml
+├── .env.example
+├── supabase/snippets/travel-view.sql
 ├── backend/
-│   ├── app/main.py                  # FastAPI app, CORS, endpoints
-│   ├── app/core/config.py           # Settings, đọc ../.env khi chạy từ backend/
-│   ├── app/db/database.py           # SQLModel engine/session
-│   ├── app/models/domain.py         # Location, Statistic, Landmark
-│   ├── alembic/                     # Migration schema travel_view
+│   ├── app/main.py
+│   ├── app/core/config.py
+│   ├── app/db/database.py
+│   ├── app/models/domain.py
+│   ├── alembic/
 │   └── requirements.txt
 └── frontend/
-    ├── src/app/page.tsx             # Dashboard chính
+    ├── src/app/page.tsx
     ├── src/components/VietnamMapD3.tsx
     ├── src/components/MetricSelector.tsx
     ├── src/components/ProvinceDetail.tsx
-    ├── src/lib/provinceApi.ts       # Contract frontend-backend
-    ├── src/lib/provinceData.ts      # Mock/legacy data
-    └── public/data/                 # GeoJSON map data
+    ├── src/lib/provinceApi.ts
+    └── public/data/
 ```
 
 ## Chạy Bằng Docker
@@ -62,7 +59,14 @@ Khởi động stack:
 docker compose up --build
 ```
 
+Seed dữ liệu mẫu:
+
+```powershell
+Get-Content -Raw supabase/snippets/travel-view.sql | docker compose exec -T postgres psql -U postgres -d travel_view
+```
+
 Sau khi chạy:
+
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8000`
 - Swagger/OpenAPI: `http://localhost:8000/docs`
@@ -85,16 +89,14 @@ Frontend:
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
 Frontend đọc API từ `NEXT_PUBLIC_API_URL`. Nếu không đặt biến này, code dùng
-mặc định `http://localhost:8000`.
+mặc định `http://127.0.0.1:8000`.
 
 ## API Hiện Có
-
-Backend hiện có các route:
 
 ```text
 GET /                         -> {"message": "Welcome to Travel View API"}
@@ -110,6 +112,7 @@ interface ProvinceData {
   hcKeys: string[];
   name: string;
   region: string;
+  hasData?: boolean;
   tourists_total: number;
   tourists_domestic: number;
   tourists_international: number;
@@ -128,14 +131,12 @@ Frontend dùng contract này trong `frontend/src/lib/provinceApi.ts`.
 
 ## Data Model
 
-Model chính nằm trong `backend/app/models/domain.py`:
-
 - `Location`: vùng/tỉnh/thành, có `level`, `parent_id`, `slug`, `hc_key`.
 - `Statistic`: dữ liệu thời gian theo `location_id` và `record_date`.
 - `Landmark`: địa danh theo `location_id`, có category dạng enum.
 
 Migration tạo schema `travel_view`, bảng `location`, `statistic`, `landmark`,
-enum `landmarkcategory`, và index `ix_stat_loc_date`.
+enum `landmarkcategory` và index `ix_stat_loc_date`.
 
 Seed mẫu nằm trong `supabase/snippets/travel-view.sql`.
 
@@ -147,52 +148,63 @@ Map đang render từ:
 frontend/public/data/vietnam-34-provinces.geojson
 ```
 
-`VietnamMapD3.tsx` đọc GeoJSON này từ `/data/vietnam-34-provinces.geojson`.
+`VietnamMapD3.tsx` đọc GeoJSON từ `/data/vietnam-34-provinces.geojson`.
 Mỗi feature cần có `properties["hc-key"]`. Key này phải khớp với `hc_key` trong
 bảng `travel_view.location`.
-
-Các script hỗ trợ:
-
-```powershell
-python merge_old_map.py
-python generate_map.py
-python test_map.py
-```
 
 Khi sửa bản đồ Việt Nam, giữ phần thể hiện Hoàng Sa và Trường Sa trong UI.
 Hiện `VietnamMapD3.tsx` có hai inset: `QD. Hoang Sa` gắn với Đà Nẵng (`VN48`)
 và `QD. Truong Sa` gắn với Khánh Hòa (`VN56`).
 
+## Kubernetes
+
+`k8s/manifests.yaml` là manifest mẫu. Trước khi apply, tạo secret triển khai:
+
+```powershell
+kubectl create secret generic travel-view-secrets `
+  --from-literal=POSTGRES_PASSWORD="<strong-password>" `
+  --from-literal=DATABASE_URL="postgresql+psycopg://postgres:<strong-password>@postgres:5432/travel_view"
+```
+
+Sau đó cập nhật image registry trong manifest rồi chạy:
+
+```powershell
+kubectl apply -f k8s/manifests.yaml
+```
+
 ## Kiểm Tra
 
-Kiểm tra backend compile:
+Backend compile:
 
 ```powershell
-cd backend
-python -m compileall app
+uv run python -m compileall backend\app
 ```
 
-Kiểm tra frontend build:
-
-```powershell
-cd frontend
-npm run build
-```
-
-Lint script hiện là:
+Frontend:
 
 ```powershell
 cd frontend
 npm run lint
+npm run build
+npm audit --audit-level=high
 ```
 
-Nếu lệnh lint lỗi do cấu hình Next/ESLint version, ưu tiên ghi lại lỗi cụ thể
-thay vì đoán.
+Docker config:
+
+```powershell
+docker compose config
+```
+
+## Contribution
+
+1. Tạo branch nhỏ cho từng nhóm thay đổi.
+2. Không commit `.env`, secret thật, `node_modules/`, `.next/`, `.venv/`, cache.
+3. Giữ commit nhỏ theo module: backend, frontend, data, infra, docs.
+4. Trước khi mở PR, chạy các lệnh kiểm tra ở trên và cập nhật tài liệu nếu đổi
+   API, seed, map key hoặc lệnh setup.
 
 ## Ghi Chú Cho Phát Triển Tiếp
 
-- README cũ từng mô tả nhiều route/chức năng chưa tồn tại. Tài liệu hiện tại
-  phản ánh code đang có.
 - Chưa có auth/admin route trong backend.
 - Chưa có router module riêng; mọi endpoint đang nằm trong `backend/app/main.py`.
 - `frontend/src/lib/provinceData.ts` là mock/legacy data và không được page chính

@@ -10,7 +10,7 @@ from FastAPI, and opens a detail panel when a province is selected.
 
 ## Stack
 
-- Frontend: Next.js 14 App Router, React 18, TypeScript, D3, Tailwind/CSS custom.
+- Frontend: Next.js 16 App Router, React 18, TypeScript, D3, Tailwind/CSS custom.
 - Backend: FastAPI, SQLModel, Pydantic.
 - Database: PostgreSQL schema `travel_view`; migrations via Alembic.
 - Services: Redis and PostgreSQL in Docker Compose.
@@ -34,6 +34,10 @@ docker compose up --build
 ```
 
 ```powershell
+Get-Content -Raw supabase/snippets/travel-view.sql | docker compose exec -T postgres psql -U postgres -d travel_view
+```
+
+```powershell
 cd backend
 pip install -r requirements.txt
 alembic upgrade head
@@ -42,7 +46,7 @@ uvicorn app.main:app --reload --port 8000
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -55,7 +59,7 @@ GET /provinces/stats/latest
 ```
 
 Base URL comes from `NEXT_PUBLIC_API_URL`, defaulting to
-`http://localhost:8000`.
+`http://127.0.0.1:8000`.
 
 The backend also exposes:
 
@@ -72,4 +76,6 @@ GET /health
   Highcharts docs as legacy unless the user asks to revive them.
 - Keep GeoJSON `properties["hc-key"]`, backend `Location.hc_key`, and frontend
   `ProvinceData.hcKeys` aligned.
-- Preserve the visible Hoàng Sa and Trường Sa map insets when editing map UI.
+- Preserve the visible Hoang Sa and Truong Sa map insets when editing map UI.
+- Do not commit real secrets. Kubernetes manifests should reference
+  `travel-view-secrets` instead of embedding deployment passwords.

@@ -28,7 +28,10 @@ spec:
             - name: POSTGRES_USER
               value: "postgres"
             - name: POSTGRES_PASSWORD
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: travel-view-secrets
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: "travel_view"
           ports:
@@ -91,7 +94,10 @@ spec:
           image: registry.local/travel-view/backend:latest
           env:
             - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@postgres:5432/travel_view"
+              valueFrom:
+                secretKeyRef:
+                  name: travel-view-secrets
+                  key: DATABASE_URL
             - name: REDIS_URL
               value: "redis://redis:6379/0"
           ports:

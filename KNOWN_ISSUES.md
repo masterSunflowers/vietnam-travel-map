@@ -1,6 +1,6 @@
 # Known Issues
 
-Last reviewed: 2026-05-25
+Last reviewed: 2026-05-26
 
 This file classifies the issues found before publishing the current Travel View
 version. The first group must be fixed before publishing; the second group can
@@ -16,7 +16,7 @@ All issues in this group have been fixed in the current working tree.
 - **Fix:** Added `.gitignore` entries for local env files, generated folders,
   virtualenvs, build output, and Python caches. `.env.example` is now kept as a
   committed template, and the local `.env` no longer contains the previous
-  `sb_secret_...` value.
+  Supabase-looking secret value.
 - **Why instant:** Publishing local credentials or generated dependency folders
   would be a release-blocking security and repository hygiene issue.
 
@@ -149,9 +149,11 @@ Latest verification run:
 - `npm.cmd run lint` in `frontend/`: passed with no output.
 - `npm.cmd audit --audit-level=high` in `frontend/`: passed; only moderate
   transitive PostCSS advisory remains.
+- `uvx pip-audit -r backend\requirements.txt`: passed with no known
+  vulnerabilities.
 - `docker compose config`: passed; backend resolves to `postgres:5432` and
   `redis:6379`. Docker still warns that `C:\Users\Admin\.docker\config.json`
   is not readable in this shell, but the Compose config is produced.
-- Static scan for `sb_secret`, `innerHTML`, wildcard CORS, `--reload`,
+- Static scan for Supabase-looking secret values, `innerHTML`, wildcard CORS, `--reload`,
   `next lint`, and `public.landmarkcategory`: no matches.
 - Local API smoke check: `/provinces/stats/latest` returned 34 records.

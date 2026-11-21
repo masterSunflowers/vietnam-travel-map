@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { MetricKey, metricLabels } from "@/lib/provinceApi";
+import { MetricKey } from "@/lib/provinceApi";
+import { useLanguage } from "@/lib/i18n";
 
 interface MetricSelectorProps {
   selected: MetricKey;
@@ -21,16 +22,19 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
   selected,
   onChange,
 }) => {
+  const { t } = useLanguage();
+
   return (
     <div style={{ padding: "8px 0" }}>
-      <select 
-        value={selected} 
+      <select
+        value={selected}
         onChange={(e) => onChange(e.target.value as MetricKey)}
         className="metric-dropdown"
+        aria-label={t.displayMetric}
       >
         {metrics.map((m) => (
           <option key={m} value={m}>
-            {metricLabels[m]}
+            {t.metrics[m]}
           </option>
         ))}
       </select>

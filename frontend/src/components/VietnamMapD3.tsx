@@ -5,11 +5,10 @@ import * as d3 from "d3";
 import {
   MetricKey,
   ProvinceData,
-  formatNumber,
   getProvinceByKey,
   getProvinceGroupKeys,
-  metricLabels,
 } from "@/lib/provinceApi";
+import { useLanguage } from "@/lib/i18n";
 
 interface VietnamMapD3Props {
   metric: MetricKey;
@@ -40,14 +39,18 @@ const HOVER_BORDER = "#f0e86c";
 const DEFAULT_BORDER = "rgba(255, 255, 255, 0.1)";
 const NULL_COLOR = "#1e2028";
 
-function createFallbackProvince(feature: any, hcKey: string): ProvinceData {
+function createFallbackProvince(
+  feature: any,
+  hcKey: string,
+  regionLabel = "Chưa có dữ liệu"
+): ProvinceData {
   const name = feature.properties?.name || feature.properties?.adm1_name1 || hcKey;
 
   return {
     id: hcKey.toLowerCase(),
     hcKeys: [hcKey],
     name,
-    region: "Chưa có dữ liệu",
+    region: regionLabel,
     hasData: false,
     tourists_total: 0,
     tourists_domestic: 0,
@@ -60,6 +63,7 @@ function createFallbackProvince(feature: any, hcKey: string): ProvinceData {
 }
 
 const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvinceClick }) => {
+  const { t, formatNumber, language } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [geoData, setGeoData] = useState<any>(null);
@@ -152,7 +156,14 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
     const findProvinceForFeature = (feature: any) => {
       const hcKey = feature.properties?.["hc-key"];
       if (!hcKey) return null;
-      return findProvinceByKey(hcKey) || createFallbackProvince(feature, hcKey);
+      return (
+        findProvinceByKey(hcKey) ||
+        createFallbackProvince(
+          feature,
+          hcKey,
+          language === "en" ? "No data" : "Chưa có dữ liệu"
+        )
+      );
     };
     const findGroupKeys = (hcKey: string) => {
       const groupKeys = getProvinceGroupKeys(provinces, hcKey);
@@ -293,15 +304,15 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
     const spacing = 16;
     const archipelagos = [
       {
-        name: "QĐ. Hoàng Sa",
-        provName: "(Đà Nẵng)",
+        name: language === "en" ? "Paracel Is." : "QĐ. Hoàng Sa",
+        provName: language === "en" ? "(Da Nang)" : "(Đà Nẵng)",
         hcKey: "VN48",
         x: width - boxW - rightPad,
         y: height - boxH * 2 - spacing - bottomPad,
       },
       {
-        name: "QĐ. Trường Sa",
-        provName: "(Khánh Hòa)",
+        name: language === "en" ? "Spratly Is." : "QĐ. Trường Sa",
+        provName: language === "en" ? "(Khanh Hoa)" : "(Khánh Hòa)",
         hcKey: "VN56",
         x: width - boxW - rightPad,
         y: height - boxH - bottomPad,
@@ -450,13 +461,13 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
       .duration(500)
       .delay((_feature: any, index: number) => index * 6)
       .attr("opacity", 1);
-  }, [containerSize, geoData, getGreyFill, hideTooltip, metric, moveTooltip, onProvinceClick, provinces, showTooltip]);
+  }, [containerSize, geoData, getGreyFill, hideTooltip, language, metric, moveTooltip, onProvinceClick, provinces, showTooltip]);
 
   if (!geoData) {
     return (
       <div className="map-loading">
         <div className="skeleton" style={{ width: 280, height: 420 }} />
-        <div className="map-loading-text">Đang tải bản đồ...</div>
+        <div className="map-loading-text">{t.loadingMap}</div>
       </div>
     );
   }
@@ -466,10 +477,10 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
   const tooltipMetricValue = tooltipProvince
     ? tooltipHasData
       ? formatNumber(tooltipProvince[metric] as number)
-      : "Không có dữ liệu"
+      : t.noData
     : "";
   const tooltipStatValue = (value: number | undefined) =>
-    tooltipHasData && value !== undefined ? formatNumber(value) : "Không có dữ liệu";
+    tooltipHasData && value !== undefined ? formatNumber(value) : t.noData;
 
   return (
     <div ref={containerRef} className="map-svg-container">
@@ -489,25 +500,25 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
             <div className="map-tooltip-name">{tooltipProvince.name}</div>
             <div className="map-tooltip-divider" />
             <div className="map-tooltip-metric">
-              <span className="map-tooltip-metric-label">{metricLabels[metric]}</span>
+              <span className="map-tooltip-metric-label">{t.metrics[metric]}</span>
               <span className="map-tooltip-metric-value">{tooltipMetricValue}</span>
             </div>
             <div className="map-tooltip-stats">
               <div className="map-tooltip-stat">
-                <span className="map-tooltip-stat-icon">Khách</span>
+                <span className="map-tooltip-stat-icon">{t.quickVisitors}</span>
                 <span>{tooltipStatValue(tooltipProvince.tourists_total)}</span>
               </div>
               <div className="map-tooltip-stat">
-                <span className="map-tooltip-stat-icon">KS</span>
+                <span className="map-tooltip-stat-icon">{t.quickHotels}</span>
                 <span>{tooltipStatValue(tooltipProvince.hotels_count)}</span>
               </div>
               <div className="map-tooltip-stat">
-                <span className="map-tooltip-stat-icon">Phòng</span>
+                <span className="map-tooltip-stat-icon">{t.quickRooms}</span>
                 <span>{tooltipStatValue(tooltipProvince.hotel_rooms_total)}</span>
               </div>
             </div>
             <div className="map-tooltip-hint">
-              {tooltipHasData ? "Nhấn để xem chi tiết" : "Chưa có dữ liệu thống kê"}
+              {tooltipHasData ? t.clickHint : t.noStats}
             </div>
           </div>
         ) : null}

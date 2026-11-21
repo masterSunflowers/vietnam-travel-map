@@ -1,8 +1,11 @@
 "use client";
 
 import React from "react";
+import { useLanguage } from "@/lib/i18n";
 
 const Header = () => {
+  const { language, setLanguage, t } = useLanguage();
+
   return (
     <header
       style={{
@@ -33,8 +36,8 @@ const Header = () => {
           {/* Logo icon */}
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: 10,
               background:
                 "linear-gradient(135deg, rgba(45, 212, 191, 0.2) 0%, rgba(56, 189, 248, 0.2) 100%)",
@@ -42,7 +45,7 @@ const Header = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 18,
+              fontSize: 20,
             }}
           >
             🗺️
@@ -50,8 +53,8 @@ const Header = () => {
           <div>
             <h1
               style={{
-                fontSize: 18,
-                fontWeight: 700,
+                fontSize: 20,
+                fontWeight: 800,
                 letterSpacing: "-0.02em",
                 background:
                   "linear-gradient(135deg, #2dd4bf 0%, #38bdf8 100%)",
@@ -60,46 +63,58 @@ const Header = () => {
                 backgroundClip: "text",
               }}
             >
-              Travel View
+              {t.appTitle}
             </h1>
-            <p
-              style={{
-                fontSize: 11,
-                color: "var(--text-muted)",
-                letterSpacing: "0.04em",
-                marginTop: -2,
-              }}
-            >
-              BẢNG ĐIỀU KHIỂN DU LỊCH
-            </p>
           </div>
         </div>
 
-        {/* Right side — could add time/date later */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 13,
-            color: "var(--text-muted)",
-          }}
-        >
-          <span
+        {/* Right side: Language Switcher & Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          {/* Language Toggle Button */}
+          <div className="language-switcher">
+            <button
+              type="button"
+              className={`lang-btn ${language === "vi" ? "active" : ""}`}
+              onClick={() => setLanguage("vi")}
+              aria-label="Tiếng Việt"
+            >
+              VI
+            </button>
+            <span className="lang-divider">/</span>
+            <button
+              type="button"
+              className={`lang-btn ${language === "en" ? "active" : ""}`}
+              onClick={() => setLanguage("en")}
+              aria-label="English"
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Connection Status */}
+          <div
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "var(--accent-emerald)",
-              display: "inline-block",
-              boxShadow: "0 0 8px rgba(52, 211, 153, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+              color: "var(--text-muted)",
             }}
-          />
-          Dữ liệu trực tiếp
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "var(--accent-emerald)",
+                display: "inline-block",
+                boxShadow: "0 0 8px rgba(52, 211, 153, 0.4)",
+              }}
+            />
+            {t.liveData}
+          </div>
         </div>
       </div>
-      {/* Gradient accent line */}
-      <div className="gradient-line" />
     </header>
   );
 };

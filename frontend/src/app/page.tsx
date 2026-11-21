@@ -5,15 +5,16 @@ import Header from "@/components/Header";
 import VietnamMapD3 from "@/components/VietnamMapD3";
 import MetricSelector from "@/components/MetricSelector";
 import ProvinceDetail from "@/components/ProvinceDetail";
+import { useLanguage } from "@/lib/i18n";
 import {
   MetricKey,
   ProvinceData,
   fetchProvinceStats,
-  formatNumber,
   getProvinceByKey,
 } from "@/lib/provinceApi";
 
 export default function Home() {
+  const { t, formatNumber } = useLanguage();
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>("tourists_total");
   const [provinces, setProvinces] = useState<ProvinceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +34,7 @@ export default function Home() {
       } catch (err) {
         if (!isMounted) return;
         const message =
-          err instanceof Error ? err.message : "Không thể tải dữ liệu tỉnh thành";
+          err instanceof Error ? err.message : t.loadError;
         setError(message);
       } finally {
         if (isMounted) {
@@ -46,7 +47,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t.loadError]);
 
   const handleProvinceClick = useCallback(
     (hcKey: string) => {
@@ -88,41 +89,41 @@ export default function Home() {
 
         <div className="map-right-panel">
           <div className="animate-fade-in" style={{ animationDelay: "0.05s" }}>
-            <div className="map-section-label">Chỉ tiêu hiển thị</div>
+            <div className="map-section-label">{t.displayMetric}</div>
             <MetricSelector selected={selectedMetric} onChange={setSelectedMetric} />
           </div>
 
           <div className="map-stats-grid animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <SummaryCard
               icon="🌏"
-              label="Tổng lượt khách"
+              label={t.totalTourists}
               value={formatNumber(totalTourists)}
               accent="var(--accent-teal)"
             />
             <SummaryCard
               icon="🏨"
-              label="Tổng khách sạn"
+              label={t.totalHotels}
               value={formatNumber(totalHotels)}
               accent="var(--accent-blue)"
             />
             <SummaryCard
               icon="🛏️"
-              label="Tổng số phòng"
+              label={t.totalRooms}
               value={formatNumber(totalRooms)}
               accent="var(--accent-purple)"
             />
             <SummaryCard
               icon="🏆"
-              label="Tỉnh dẫn đầu"
+              label={t.topProvince}
               value={topProvince ? topProvince.name.replace("Thanh pho ", "TP. ") : "N/A"}
               accent="var(--accent-amber)"
-              subValue={topProvince ? `${formatNumber(topProvince.tourists_total)} khách` : undefined}
+              subValue={topProvince ? `${formatNumber(topProvince.tourists_total)} ${t.visitorsSuffix}` : undefined}
             />
           </div>
 
           {isLoading && (
             <div style={{ marginTop: 12, color: "var(--text-muted)", fontSize: 13 }}>
-              Đang tải dữ liệu từ database...
+              {t.loadingData}
             </div>
           )}
           {error && (
@@ -175,9 +176,9 @@ function SummaryCard({
       >
         {icon}
       </div>
-      <div>
-        <div className="map-stat-value">{value}</div>
+      <div className="map-stat-content">
         <div className="map-stat-label">{label}</div>
+        <div className="map-stat-value">{value}</div>
         {subValue && (
           <div className="map-stat-sub" style={{ color: accent }}>
             {subValue}

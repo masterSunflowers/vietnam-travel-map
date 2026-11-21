@@ -108,13 +108,61 @@ body {
   padding: 10px;
 }
 
+/* ===== Language Switcher ===== */
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 3px 6px;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.language-switcher:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.lang-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lang-btn:hover {
+  color: var(--text-primary);
+}
+
+.lang-btn.active {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.2) 0%, rgba(56, 189, 248, 0.2) 100%);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.lang-divider {
+  color: var(--border-subtle);
+  font-size: 11px;
+  user-select: none;
+}
+
 /* ===== Stat card ===== */
 .stat-card {
   background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  padding: 20px;
+  padding: 16px 18px;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-card:hover {
@@ -123,22 +171,41 @@ body {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-card-icon {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
 .stat-value {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   background: var(--gradient-brand);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.2;
 }
 
-.stat-label {
-  font-size: 12px;
-  font-weight: 500;
+.stat-unit {
+  font-size: 11px;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   margin-top: 4px;
+  font-weight: 500;
 }
 
 /* ===== Province detail panel ===== */
@@ -346,8 +413,8 @@ body {
   border-radius: 14px;
   padding: 16px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -358,36 +425,44 @@ body {
 }
 
 .map-stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
-.map-stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
+.map-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
 }
 
 .map-stat-label {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 2px;
+  letter-spacing: 0.06em;
+}
+
+.map-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .map-stat-sub {
   font-size: 12px;
-  font-weight: 500;
-  margin-top: 2px;
+  font-weight: 600;
+  margin-top: 1px;
 }
 
 /* ===== Instruction ===== */

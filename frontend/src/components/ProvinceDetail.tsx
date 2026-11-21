@@ -1,13 +1,8 @@
 "use client";
 
 import React from "react";
-import {
-  ProvinceData,
-  formatNumber,
-  metricLabels,
-  metricUnits,
-  MetricKey,
-} from "@/lib/provinceApi";
+import { ProvinceData, MetricKey } from "@/lib/provinceApi";
+import { useLanguage } from "@/lib/i18n";
 
 interface ProvinceDetailProps {
   province: ProvinceData | null;
@@ -20,6 +15,7 @@ const landmarkTypeColors: Record<string, string> = {
   beach: "badge-beach",
   city: "badge-city",
   heritage: "badge-heritage",
+  other: "",
 };
 
 const statMetrics: { key: MetricKey; icon: string }[] = [
@@ -35,6 +31,8 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
   province,
   onClose,
 }) => {
+  const { t, formatNumber } = useLanguage();
+
   return (
     <div className={`province-panel ${province ? "open" : ""}`}>
       {province && (
@@ -53,7 +51,7 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
             >
               <path d="M10 12L6 8L10 4" />
             </svg>
-            Quay lại Bản đồ
+            {t.backToMap}
           </button>
 
           {/* Province header */}
@@ -90,7 +88,7 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
             </h2>
           </div>
 
-          {/* Stats grid */}
+          {/* Stats grid: Title/Label on top, Value on bottom */}
           <div
             className="animate-fade-in"
             style={{
@@ -103,27 +101,14 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
           >
             {statMetrics.map(({ key, icon }) => (
               <div key={key} className="stat-card">
-                <div
-                  style={{
-                    fontSize: 16,
-                    marginBottom: 6,
-                  }}
-                >
-                  {icon}
+                <div className="stat-card-header">
+                  <span className="stat-label">{t.metrics[key]}</span>
+                  <span className="stat-card-icon">{icon}</span>
                 </div>
                 <div className="stat-value">
                   {formatNumber(province[key] as number)}
                 </div>
-                <div className="stat-label">{metricLabels[key]}</div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "var(--text-muted)",
-                    marginTop: 2,
-                  }}
-                >
-                  {metricUnits[key]}
-                </div>
+                <div className="stat-unit">{t.metricUnits[key]}</div>
               </div>
             ))}
           </div>
@@ -144,7 +129,7 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
                   marginBottom: 16,
                 }}
               >
-                🏛️ Địa Danh Nổi Bật
+                🏛️ {t.notableLandmarks}
               </h3>
               <div
                 style={{
@@ -174,7 +159,7 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
                           landmarkTypeColors[lm.type] || ""
                         }`}
                       >
-                        {lm.type}
+                        {t.categories[lm.type] || lm.type}
                       </span>
                     </div>
                     <div
@@ -216,7 +201,7 @@ const ProvinceDetail: React.FC<ProvinceDetailProps> = ({
                 animationDelay: "0.2s",
               }}
             >
-              Chưa có dữ liệu địa danh cho khu vực này.
+              {t.noLandmarks}
             </div>
           )}
         </div>

@@ -1,0 +1,12 @@
+{
+  "linter-on-stop": {
+    "enabled": true,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node .agent/hooks/lint_on_stop.js",
+        "timeout": 120
+      }
+    ]
+  }
+}

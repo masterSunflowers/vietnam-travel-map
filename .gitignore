@@ -15,6 +15,12 @@ backend/venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Agent & Editor local tooling
+.claude/
+.agents/
 
 # Local Supabase state
 supabase/.temp/

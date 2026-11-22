@@ -1,0 +1,24 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+cache-dir = "~/.cache/ruff"
+
+[tool.ruff.lint]
+# E: pycodestyle errors, F: Pyflakes, I: isort, UP: pyupgrade, B: flake8-bugbear
+select = ["E", "F", "I", "UP", "B"]
+# B008: Do not perform function call `Depends` in argument defaults (standard FastAPI pattern)
+# UP042: Class inherits from both str and Enum (needed for SQLAlchemy enum column compatibility)
+ignore = ["B008", "E501", "UP042"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = true
+explicit_package_bases = true
+# Suppress dynamic SQLModel attribute warnings and select overloads
+disable_error_code = ["attr-defined", "call-overload"]

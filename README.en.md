@@ -81,12 +81,17 @@ travel-view/
 │   ├── Dockerfile                             # Backend container configuration
 │   ├── requirements.txt                       # Python dependencies
 │   ├── alembic/                               # Database migration scripts
+│   ├── tests/                                 # Automated test suite (offline & mock-enabled)
 │   └── app/
-│       ├── main.py                            # FastAPI entrypoint and route handlers
-│       ├── core/config.py                     # Pydantic Settings configuration
+│       ├── main.py                            # FastAPI entrypoint, lifespan scheduler, and routes
+│       ├── core/
+│       │   ├── config.py                      # Pydantic Settings configuration
+│       │   └── scheduler.py                   # Periodic background sync scheduler
 │       ├── db/database.py                     # Database engine initialization
 │       ├── models/domain.py                   # Domain models: Location, Statistic, Landmark
 │       └── crawler/                           # Official VNAT crawler and data reconciliation
+│           ├── online_checker.py              # Online release milestone detector
+│           ├── auto_sync.py                   # Delta comparator & automated sync engine
 │           ├── monthly_dataset.py             # 10 monthly milestones and publication metadata
 │           ├── official_dataset.py            # Normalized baseline tourism metrics
 │           ├── province_mapping.py            # 63-to-34 province administrative mapping
@@ -183,6 +188,8 @@ GET /                                                -> {"message": "Welcome to 
 GET /health                                          -> {"status": "ok"}
 GET /provinces/stats/latest?view_mode=...&date=...    -> Real-time provincial statistics for 34 provinces
 GET /provinces/stats/dates?view_mode=...             -> List of monthly publication milestones and metadata
+GET /admin/sync/status                               -> Check delta between online releases vs DB & scheduler state
+POST /admin/sync/auto?force=...&dry_run=...          -> Trigger automated sync when online updates are detected
 ```
 
 ### 2. Contract Schemas
@@ -230,6 +237,39 @@ interface DateOptionResponse {
   report_url: string;                       // Detailed article report link
 }
 ```
+
+---
+
+## Automated Data Crawling & Sync Job
+
+Travel View features an automated background worker that compares online tourism releases (Vietnam National Authority of Tourism - VNAT) against the latest milestone stored in PostgreSQL:
+
+1. **How It Works**:
+   - Inspects VNAT official release feed (`https://public.vietnamtourism.gov.vn/cat/71?type=1`).
+   - Extracts target reporting period (month/year, end-of-month date, international growth rate).
+   - Compares against `MAX(record_date)` in `travel_view.statistic`.
+   - **Smart Ingestion Trigger**: Automatically ingests and reconciles data into the 34 merged provinces only when online data is strictly newer than the database (or when `--force` is specified).
+
+2. **CLI Runner**:
+   ```powershell
+   cd backend
+   # Inspect comparison delta between DB and online release
+   python -m app.crawler.auto_sync --check-only
+
+   # Run a single sync cycle (triggers ingestion if newer data is available)
+   python -m app.crawler.auto_sync --run-once
+
+   # Simulate ingestion without writing to the database
+   python -m app.crawler.auto_sync --run-once --dry-run
+
+   # Run continuous background daemon (default interval: 6 hours = 21600s)
+   python -m app.crawler.auto_sync --interval 21600
+   ```
+
+3. **FastAPI Lifespan Scheduler**:
+   - Runs automatically as an asynchronous background task within the FastAPI app.
+   - Configured via `.env`: `AUTO_CRAWL_ENABLED=true`, `AUTO_CRAWL_INTERVAL_HOURS=6`.
+   - Monitored via admin endpoints: `GET /admin/sync/status` and `POST /admin/sync/auto`.
 
 ---
 

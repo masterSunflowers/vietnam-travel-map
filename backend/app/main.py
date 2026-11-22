@@ -1,5 +1,7 @@
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import date as dt_date
+from typing import Any
 
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,13 +9,28 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from app.core.config import settings
+from app.core.scheduler import get_scheduler_status, start_scheduler, stop_scheduler
+from app.crawler.auto_sync import (
+    AutoSyncResult,
+    SyncDeltaReport,
+    evaluate_sync_delta,
+    execute_auto_sync,
+)
 from app.crawler.monthly_dataset import MONTHLY_MILESTONES
 from app.crawler.province_mapping import MERGED_PROVINCES
 from app.crawler.sync import run_sync_pipeline
 from app.db.database import get_session
 from app.models.domain import Landmark, Location, Statistic
 
-app = FastAPI(title="Travel View API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(title="Travel View API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -315,3 +332,33 @@ def trigger_sync_stats(
         session=session,
         apply_growth=not no_growth,
     )
+
+
+class AdminSyncStatusResponse(BaseModel):
+    delta: SyncDeltaReport
+    scheduler: dict[str, Any]
+
+
+@app.get("/admin/sync/status", response_model=AdminSyncStatusResponse)
+def get_admin_sync_status(session: Session = Depends(get_session)):
+    """
+    Check sync status: compares latest milestone in DB vs latest available online,
+    and reports scheduler status.
+    """
+    delta = evaluate_sync_delta(session=session)
+    sched = get_scheduler_status()
+    return AdminSyncStatusResponse(delta=delta, scheduler=sched)
+
+
+@app.post("/admin/sync/auto", response_model=AutoSyncResult)
+def trigger_admin_auto_sync(
+    force: bool = Query(default=False, description="Force sync even if up to date"),
+    dry_run: bool = Query(default=False, description="Simulate without writing to DB"),
+    session: Session = Depends(get_session),
+):
+    """
+    Trigger smart automated synchronization: only crawls and writes to database
+    if online source has newer data (or if force=True).
+    """
+    return execute_auto_sync(session=session, force=force, dry_run=dry_run)
+

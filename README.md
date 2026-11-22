@@ -81,12 +81,17 @@ travel-view/
 │   ├── Dockerfile                             # Container build cho backend
 │   ├── requirements.txt                       # Thư viện phụ thuộc Python
 │   ├── alembic/                               # Migration schema cơ sở dữ liệu
+│   ├── tests/                                 # Unit tests hệ thống (offline, mockable)
 │   └── app/
-│       ├── main.py                            # FastAPI app và routes endpoint
-│       ├── core/config.py                     # Quản lý cấu hình Settings
+│       ├── main.py                            # FastAPI app, lifespan scheduler và API routes
+│       ├── core/
+│       │   ├── config.py                      # Quản lý cấu hình Settings
+│       │   └── scheduler.py                   # Background scheduler định kỳ kiểm tra cập nhật
 │       ├── db/database.py                     # Khởi tạo kết nối SQLModel Engine
 │       ├── models/domain.py                   # Model thực thể: Location, Statistic, Landmark
 │       └── crawler/                           # Pipeline crawler & bộ nạp dữ liệu VNAT
+│           ├── online_checker.py              # Kiểm tra mốc phát hành trực tuyến mới nhất
+│           ├── auto_sync.py                   # Động cơ tự động so sánh mốc và đồng bộ DB
 │           ├── monthly_dataset.py             # Metadata 10 mốc thời gian công bố VNAT
 │           ├── official_dataset.py            # Số liệu du lịch chính thức
 │           ├── province_mapping.py            # Quy đổi địa giới 63 sang 34 tỉnh/thành
@@ -183,6 +188,8 @@ GET /                                                -> {"message": "Welcome to 
 GET /health                                          -> {"status": "ok"}
 GET /provinces/stats/latest?view_mode=...&date=...    -> Danh sách thống kê du lịch 34 tỉnh/thành
 GET /provinces/stats/dates?view_mode=...             -> Danh sách các mốc thời gian kèm metadata VNAT
+GET /admin/sync/status                               -> Kiểm tra độ lệch mốc online vs DB & trạng thái scheduler
+POST /admin/sync/auto?force=...&dry_run=...          -> Kích hoạt đồng bộ tự động thông minh khi có dữ liệu mới
 ```
 
 ### 2. Cấu trúc dữ liệu phản hồi
@@ -230,6 +237,39 @@ interface DateOptionResponse {
   report_url: string;                       // Đường dẫn bài báo cáo chi tiết
 }
 ```
+
+---
+
+## Tự Động Hóa Đồng Bộ Dữ Liệu (Automated Crawling & Sync Job)
+
+Hệ thống tích hợp tiến trình nền tự động so sánh mốc dữ liệu mới nhất trực tuyến (Cục Du lịch Quốc gia Việt Nam - VNAT) với mốc dữ liệu hiện có trong PostgreSQL:
+
+1. **Cơ chế hoạt động**:
+   - Quét danh mục thông cáo báo chí VNAT (`https://public.vietnamtourism.gov.vn/cat/71?type=1`).
+   - Bóc tách kỳ báo cáo (tháng/năm, ngày chốt cuối tháng, tỷ lệ tăng trưởng khách quốc tế).
+   - So sánh với `MAX(record_date)` trong bảng `travel_view.statistic`.
+   - **Tự động kích hoạt crawl & upsert**: Chỉ khi phát hiện mốc trực tuyến mới hơn cơ sở dữ liệu hiện tại (hoặc khi được yêu cầu bắt buộc qua cờ `--force`).
+
+2. **Chạy qua CLI**:
+   ```powershell
+   cd backend
+   # Kiểm tra độ lệch mốc online vs database
+   python -m app.crawler.auto_sync --check-only
+
+   # Chạy 1 chu kỳ kiểm tra và đồng bộ (nếu có dữ liệu mới)
+   python -m app.crawler.auto_sync --run-once
+
+   # Chạy giả lập (Dry run) không ghi vào database
+   python -m app.crawler.auto_sync --run-once --dry-run
+
+   # Chạy daemon lặp lại định kỳ (mặc định mỗi 6 giờ = 21600s)
+   python -m app.crawler.auto_sync --interval 21600
+   ```
+
+3. **Background Scheduler trong FastAPI**:
+   - Tự động kích hoạt theo vòng đời (lifespan) của FastAPI app.
+   - Cấu hình qua `.env`: `AUTO_CRAWL_ENABLED=true`, `AUTO_CRAWL_INTERVAL_HOURS=6`.
+   - Quản trị qua API: `GET /admin/sync/status` và `POST /admin/sync/auto`.
 
 ---
 

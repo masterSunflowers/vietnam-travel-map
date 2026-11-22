@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => onViewModeChange("cumulative")}
               >
                 <span>📊</span>
-                <span>{t.cumulativeView}</span>
+                <span className="view-mode-label">{t.cumulativeView}</span>
               </button>
               <button
                 type="button"
@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => onViewModeChange("monthly")}
               >
                 <span>📅</span>
-                <span>{t.monthlyView}</span>
+                <span className="view-mode-label">{t.monthlyView}</span>
               </button>
             </div>
           )}
@@ -97,13 +97,15 @@ const Header: React.FC<HeaderProps> = ({
                 aria-label={t.timeFilter}
               >
                 {availableDates.map((item) => {
-                  const label =
+                  const rawLabel =
                     language === "vi"
                       ? item.label_short_vi || item.label_vi
                       : item.label_short_en || item.label_en;
+                  // Strip redundant parenthetical text to keep select box compact
+                  const label = rawLabel.replace(/\s*\([^)]*\)/g, "").trim();
 
                   return (
-                    <option key={item.date} value={item.date}>
+                    <option key={item.date} value={item.date} title={rawLabel}>
                       {label}
                     </option>
                   );

@@ -38,6 +38,7 @@ export interface Translations {
   colRooms: string;
   colProof: string;
   viewProof: string;
+  tableScrollHint: string;
   noResultsFound: string;
   timePeriod: string;
   displayMetric: string;
@@ -97,6 +98,7 @@ export const dictionaries: Record<Language, Translations> = {
     colRooms: "Số phòng",
     colProof: "Minh chứng",
     viewProof: "Kiểm chứng",
+    tableScrollHint: "↔ Cuộn ngang để xem đủ 11 chỉ tiêu & minh chứng",
     noResultsFound: "Không tìm thấy tỉnh thành phù hợp với từ khóa.",
     timePeriod: "Thời gian thống kê",
     displayMetric: "Chỉ tiêu hiển thị",
@@ -175,6 +177,7 @@ export const dictionaries: Record<Language, Translations> = {
     colRooms: "Rooms",
     colProof: "Proof",
     viewProof: "Verify",
+    tableScrollHint: "↔ Scroll horizontally to view all 11 indicators & proof",
     noResultsFound: "No provinces match your search query.",
     timePeriod: "Statistical Period",
     displayMetric: "Display Metric",

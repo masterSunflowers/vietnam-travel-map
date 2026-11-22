@@ -212,8 +212,13 @@ export default function VerificationView({
             </button>
           )}
         </div>
-        <div className="verification-count-badge">
-          {filteredProvinces.length} / {provinces.length} {t.allProvincesCount}
+        <div className="verification-toolbar-right">
+          <div className="table-scroll-hint">
+            {t.tableScrollHint}
+          </div>
+          <div className="verification-count-badge">
+            {filteredProvinces.length} / {provinces.length} {t.allProvincesCount}
+          </div>
         </div>
       </div>
 
@@ -232,18 +237,17 @@ export default function VerificationView({
           <table className="verification-table">
             <thead>
               <tr>
-                <th style={{ width: 38, textAlign: "center" }}>{t.colNo}</th>
+                <th className="th-sticky-stt" style={{ width: 38, textAlign: "center" }}>{t.colNo}</th>
                 <th
                   onClick={() => handleSort("name")}
-                  className={`sortable ${sortField === "name" ? "sorted" : ""}`}
-                  style={{ minWidth: 130 }}
+                  className={`sortable th-sticky-name ${sortField === "name" ? "sorted" : ""}`}
                 >
                   {t.colProvince}
                   <span className="sort-indicator">
                     {sortField === "name" ? (sortDirection === "asc" ? " ↑" : " ↓") : " ↕"}
                   </span>
                 </th>
-                <th style={{ minWidth: 150 }}>{t.colMergedFrom}</th>
+                <th>{t.colMergedFrom}</th>
                 <th
                   onClick={() => handleSort("tourists_total")}
                   className={`sortable num-col ${sortField === "tourists_total" ? "sorted" : ""}`}
@@ -299,7 +303,7 @@ export default function VerificationView({
                     {sortField === "hotel_rooms_total" ? (sortDirection === "asc" ? " ↑" : " ↓") : " ↕"}
                   </span>
                 </th>
-                <th style={{ width: 88, textAlign: "center" }}>{t.colProof}</th>
+                <th className="th-proof">{t.colProof}</th>
               </tr>
             </thead>
             <tbody>
@@ -311,10 +315,10 @@ export default function VerificationView({
 
                 return (
                   <tr key={province.id} className="table-row">
-                    <td style={{ textAlign: "center", color: "var(--text-muted)" }}>
+                    <td className="td-sticky-stt" style={{ textAlign: "center", color: "var(--text-muted)" }}>
                       {idx + 1}
                     </td>
-                    <td className="province-name-cell">
+                    <td className="td-sticky-name province-name-cell">
                       <span className="province-primary-name">{province.name}</span>
                       <span className="province-region-tag">{province.region}</span>
                     </td>
@@ -352,7 +356,7 @@ export default function VerificationView({
                     <td className="num-col font-mono">
                       {formatNum(province.hotel_rooms_total)}
                     </td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="td-proof">
                       <a
                         href={province.citation_url || "https://vietnamtourism.gov.vn/statistic?view=home&category=71"}
                         target="_blank"

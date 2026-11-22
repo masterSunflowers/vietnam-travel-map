@@ -66,6 +66,8 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
   const { t, formatNumber, language } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const svgSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
   const [geoData, setGeoData] = useState<any>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(
     null
@@ -76,6 +78,24 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
     y: 0,
     visible: false,
   });
+
+  const handleZoomIn = () => {
+    if (svgSelectionRef.current && zoomBehaviorRef.current) {
+      svgSelectionRef.current.transition().duration(250).call(zoomBehaviorRef.current.scaleBy, 1.35);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (svgSelectionRef.current && zoomBehaviorRef.current) {
+      svgSelectionRef.current.transition().duration(250).call(zoomBehaviorRef.current.scaleBy, 0.75);
+    }
+  };
+
+  const handleZoomReset = () => {
+    if (svgSelectionRef.current && zoomBehaviorRef.current) {
+      svgSelectionRef.current.transition().duration(300).call(zoomBehaviorRef.current.transform, d3.zoomIdentity);
+    }
+  };
 
   useEffect(() => {
     fetch("/data/vietnam-34-provinces.geojson")
@@ -180,19 +200,35 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
     }
 
     const svgSel = d3.select(svg as SVGSVGElement);
+    svgSelectionRef.current = svgSel;
     svgSel.selectAll("*").remove();
     svgSel.attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`);
 
-    const padding = 24;
+    const isCompact = width < 540 || height < 480;
+    const paddingX = Math.max(12, Math.min(width * 0.04, 28));
+    const paddingY = Math.max(12, Math.min(height * 0.035, 24));
     const projection = d3
       .geoIdentity()
       .reflectY(true)
-      .fitSize([width - padding * 2, height - padding * 2], geoData as any);
+      .fitSize([width - paddingX * 2, height - paddingY * 2], geoData as any);
     const tx = projection.translate();
-    projection.translate([tx[0] + padding, tx[1] + padding]);
+    projection.translate([tx[0] + paddingX, tx[1] + paddingY]);
     const pathGen = d3.geoPath().projection(projection as any);
 
-    const g = svgSel.append("g");
+    // Zoomable layer for mainland Vietnam
+    const mapZoomGroup = svgSel.append("g").attr("class", "map-zoom-group");
+    const g = mapZoomGroup.append("g").attr("class", "provinces-layer");
+
+    // D3 Zoom & Pan behavior
+    const zoomBehavior = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.8, 8])
+      .on("zoom", (event) => {
+        mapZoomGroup.attr("transform", event.transform);
+      });
+
+    zoomBehaviorRef.current = zoomBehavior;
+    svgSel.call(zoomBehavior);
 
     const paths = g
       .selectAll("path")
@@ -297,11 +333,11 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
         }
       });
 
-    const boxW = 100;
-    const boxH = 80;
-    const rightPad = 24;
-    const bottomPad = 24;
-    const spacing = 16;
+    const boxW = isCompact ? 76 : 96;
+    const boxH = isCompact ? 56 : 72;
+    const rightPad = isCompact ? 10 : 20;
+    const bottomPad = isCompact ? 10 : 20;
+    const spacing = isCompact ? 8 : 12;
     const archipelagos = [
       {
         name: language === "en" ? "Paracel Is." : "QĐ. Hoàng Sa",
@@ -371,10 +407,10 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
       gArch
         .append("text")
         .attr("x", boxW / 2)
-        .attr("y", boxH - 22)
+        .attr("y", isCompact ? boxH - 18 : boxH - 22)
         .attr("text-anchor", "middle")
         .attr("fill", "rgba(255, 255, 255, 0.8)")
-        .attr("font-size", "11px")
+        .attr("font-size", isCompact ? "9.5px" : "11px")
         .attr("font-weight", "500")
         .attr("pointer-events", "none")
         .text(archipelago.name);
@@ -382,10 +418,10 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
       gArch
         .append("text")
         .attr("x", boxW / 2)
-        .attr("y", boxH - 8)
+        .attr("y", isCompact ? boxH - 6 : boxH - 8)
         .attr("text-anchor", "middle")
         .attr("fill", "rgba(255, 255, 255, 0.5)")
-        .attr("font-size", "10px")
+        .attr("font-size", isCompact ? "8.5px" : "10px")
         .attr("pointer-events", "none")
         .text(archipelago.provName);
 
@@ -484,6 +520,34 @@ const VietnamMapD3: React.FC<VietnamMapD3Props> = ({ metric, provinces, onProvin
 
   return (
     <div ref={containerRef} className="map-svg-container">
+      {/* Floating Zoom & Reset Controls */}
+      <div className="map-floating-controls" aria-label="Map Zoom Controls">
+        <button
+          type="button"
+          className="map-control-btn"
+          onClick={handleZoomIn}
+          title={language === "vi" ? "Phóng to (+)" : "Zoom in (+)"}
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="map-control-btn"
+          onClick={handleZoomOut}
+          title={language === "vi" ? "Thu nhỏ (-)" : "Zoom out (-)"}
+        >
+          −
+        </button>
+        <button
+          type="button"
+          className="map-control-btn"
+          onClick={handleZoomReset}
+          title={language === "vi" ? "Xem toàn cảnh (Reset)" : "Reset view"}
+        >
+          ⟲
+        </button>
+      </div>
+
       <div
         ref={tooltipRef}
         className="map-tooltip"

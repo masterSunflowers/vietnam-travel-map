@@ -1,133 +1,157 @@
-# Travel View
+# Travel View — Bản Đồ Dữ Liệu Du Lịch Việt Nam
 
-Travel View là dashboard full-stack để xem dữ liệu du lịch Việt Nam theo
-tỉnh/thành trên bản đồ tương tác. Ứng dụng hiện tập trung vào màn hình bản đồ
-quốc gia, bộ chọn metric, thống kê tổng quan và panel chi tiết tỉnh/thành.
+<p align="center">
+  <a href="README.md"><b>🇻🇳 Tiếng Việt</b></a> &nbsp;|&nbsp; <a href="README.en.md"><b>🇬🇧 English</b></a>
+</p>
 
-Nếu bạn là agent/coding assistant, đọc thêm `AGENT.md` trước khi sửa dự án.
+---
+
+**Travel View** là dashboard GIS full-stack hiện đại để trực quan hóa dữ liệu du lịch Việt Nam theo 34 tỉnh/thành phố (sau sáp nhập) trên bản đồ tương tác. Ứng dụng cung cấp kiến trúc web 2 tab chuyên sâu, kết hợp giữa trực quan hóa không gian GIS và bảng dữ liệu đối chứng chính thức từ Cục Du lịch Quốc gia Việt Nam (VNAT) và Tổng cục Thống kê (GSO).
+
+Nếu bạn là AI agent hoặc nhà phát triển phần mềm, vui lòng đọc thêm hướng dẫn phát triển tại [`GEMINI.md`](GEMINI.md).
+
+---
+
+## Tính Năng Nổi Bật
+
+### 1. Tab 1: Bản Đồ Du Lịch GIS Tương Tác (Interactive GIS Map)
+- **Phân bổ địa giới 34 tỉnh/thành phố sáp nhập mới**: Dựa trên bản đồ GeoJSON chuẩn hóa `hc-key` tương thích D3.
+- **Bản đồ nhiệt Choropleth đa chỉ tiêu**: Hỗ trợ 6 chỉ tiêu du lịch cốt lõi:
+  - Tổng lượt khách (`tourists_total`)
+  - Khách nội địa (`tourists_domestic`)
+  - Khách quốc tế (`tourists_international`)
+  - Lượt khách lưu trú (`overnight_stays_total`)
+  - Số lượng cơ sở lưu trú / khách sạn (`hotels_count`)
+  - Tổng số phòng khách sạn (`hotel_rooms_total`)
+- **Bộ điều khiển Zoom & Pan mượt mà (`d3.zoom()`)**:
+  - Hỗ trợ cuộn chuột hoặc cử chỉ cảm ứng phóng to / thu nhỏ linh hoạt.
+  - Cụm nút bấm nổi thủy tinh mờ (Glassmorphism): `[+]` Phóng to, `[−]` Thu nhỏ, `[⟲]` Xem toàn cảnh toàn quốc.
+- **Bố cục màn hình thích ứng (Zero-Scroll Fit Layout)**: Tự động tính toán padding theo khung nhìn, hiển thị trọn vẹn dải đất hình chữ S từ Hà Giang đến Mũi Cà Mau và đảo Phú Quốc mà không bị xén lề.
+- **Bảo tồn chủ quyền biển đảo**: Tích hợp hai khung đảo inset cho **Quần đảo Hoàng Sa** (gắn với Đà Nẵng) và **Quần đảo Trường Sa** (gắn với Khánh Hòa) tự động co giãn, đảm bảo chủ quyền thiêng liêng mà không che lấp đất liền miền Trung.
+- **Panel chi tiết tỉnh/thành (`ProvinceDetail`)**: Mở nhanh khi nhấp chọn tỉnh/thành, hiển thị danh mục địa phương sáp nhập cấu thành, thống kê tổng hợp và danh lam thắng cảnh, di tích lịch sử nổi bật.
+
+### 2. Tab 2: Tài Liệu Đối Chứng Số Liệu Chính Thức (Official Data Verification View)
+- **Bảng số liệu đối chứng 11 cột chuẩn hóa**:
+  - `STT`, `Tỉnh / Thành phố mới`, `Đơn vị sáp nhập cấu thành`, `Tổng lượt khách`, `Khách nội địa`, `Khách quốc tế`, `Tỷ lệ khách quốc tế (%)`, `Lượt lưu trú`, `Số khách sạn`, `Số phòng`, `Minh chứng nguồn`.
+- **Cố định 2 cột đầu (Freeze Columns)**: Cột `STT` và `Tên tỉnh/thành` được cố định (`position: sticky`) khi cuộn ngang, giúp tra cứu số liệu ở các cột sau cực kỳ thuận tiện.
+- **Tìm kiếm tức thì đa trường**: Tìm kiếm theo tên tỉnh, tên đơn vị sáp nhập (ví dụ: gõ "Hà Tây", "Bà Rịa" hoặc "Đồng bằng sông Hồng").
+- **Dải băng tóm tắt toàn quốc (Overview Ribbon)**: Tổng hợp nhanh tổng số lượt khách, khách nội địa, quốc tế và số lượng phòng trên phạm vi cả nước.
+- **Banner trích dẫn nguồn công bố chính thức**: Hiển thị tên cơ quan công bố (VNAT), tên ấn phẩm báo cáo, ngày phát hành và liên kết tra cứu trực tiếp `🔗 Kiểm chứng` tới từng văn bản báo cáo gốc.
+
+### 3. Header Điều Khiển Dùng Chung Đa Năng
+- **Bộ lọc mốc thời gian 10 tháng**: Chọn xem báo cáo từ Tháng 01/2026 đến Tháng 10/2026.
+- **Công tắc chuyển đổi góc nhìn thống kê**:
+  - **Lũy kế (`cumulative`)**: Tổng số liệu tính từ đầu năm đến mốc thời gian đã chọn.
+  - **Riêng trong tháng (`monthly`)**: Số liệu phát sinh riêng trong tháng đó.
+- **Chuyển đổi song ngữ toàn diện (VI / EN)**: Hỗ trợ 100% tiếng Việt và tiếng Anh, tự động lưu lựa chọn vào `localStorage`.
+
+---
 
 ## Tech Stack
 
-| Phần | Công nghệ | Ghi chú |
+| Thành Phần | Công Nghệ | Ghi Chú |
 |---|---|---|
-| Frontend | Next.js 16, React 18, TypeScript | App Router, route chính `/` |
-| Map | D3 + SVG | Component đang dùng: `VietnamMapD3.tsx` |
-| Styling | Tailwind CSS + CSS custom | Style chính nằm trong `globals.css` |
-| Backend | FastAPI, SQLModel, Pydantic | Route đang nằm trực tiếp trong `app/main.py` |
-| Database | PostgreSQL | Schema `travel_view` |
-| Migration | Alembic | Migration chính trong `backend/alembic/versions/` |
-| Cache/service phụ | Redis | Có trong Docker Compose |
-| Local orchestration | Docker Compose | PostgreSQL, Redis, backend, frontend |
+| **Frontend** | Next.js 16 (App Router), React 18, TypeScript | Render tối ưu với Turbopack, chạy standalone |
+| **Map Engine** | D3.js (v7) + SVG Vector | Component chính: `VietnamMapD3.tsx` |
+| **Giao Diện** | Tailwind CSS + Custom Dark Glassmorphism | Bố cục tại `globals.css`, tối ưu thích ứng mọi thiết bị |
+| **Backend** | FastAPI, SQLModel (SQLAlchemy), Pydantic v2 | Python 3.11+, kiến trúc bất đồng bộ |
+| **Data Crawler** | Python Crawler Pipeline (`backend/app/crawler/`) | Nạp 10 tháng dữ liệu VNAT, thuật toán quy đổi 63 -> 34 tỉnh |
+| **Database** | PostgreSQL | Schema riêng biệt `travel_view` |
+| **Migration** | Alembic | Quản lý lịch sử schema tại `backend/alembic/` |
+| **Cache & Bus** | Redis | Định tuyến bộ nhớ đệm qua Docker Compose |
+| **Orchestration**| Docker Compose | Môi trường container hóa trọn gói (Frontend, Backend, DB, Redis)|
+
+---
 
 ## Cấu Trúc Dự Án
 
 ```text
 travel-view/
-├── AGENT.md
-├── CONTRIBUTING.md
-├── README.md
-├── docker-compose.yml
-├── .env.example
-├── supabase/snippets/travel-view.sql
+├── .env.example                               # File mẫu cấu hình môi trường
+├── docker-compose.yml                         # Cấu hình container toàn bộ stack
+├── CONTRIBUTING.md                            # Quy chuẩn đóng góp mã nguồn
+├── GEMINI.md                                  # Bản đồ chỉ dẫn dành riêng cho AI Agent
+├── README.md                                  # Hướng dẫn dự án tiếng Việt
+├── README.en.md                               # Hướng dẫn dự án tiếng Anh
+├── k8s/                                       # Manifests mẫu triển khai Kubernetes
+│   └── manifests.yaml
+├── supabase/snippets/
+│   └── travel-view.sql                        # Script seed dữ liệu UTF-8
 ├── backend/
-│   ├── app/main.py
-│   ├── app/core/config.py
-│   ├── app/db/database.py
-│   ├── app/models/domain.py
-│   ├── alembic/
-│   └── requirements.txt
+│   ├── Dockerfile                             # Container build cho backend
+│   ├── requirements.txt                       # Thư viện phụ thuộc Python
+│   ├── alembic/                               # Migration schema cơ sở dữ liệu
+│   └── app/
+│       ├── main.py                            # FastAPI app và routes endpoint
+│       ├── core/config.py                     # Quản lý cấu hình Settings
+│       ├── db/database.py                     # Khởi tạo kết nối SQLModel Engine
+│       ├── models/domain.py                   # Model thực thể: Location, Statistic, Landmark
+│       └── crawler/                           # Pipeline crawler & bộ nạp dữ liệu VNAT
+│           ├── monthly_dataset.py             # Metadata 10 mốc thời gian công bố VNAT
+│           ├── official_dataset.py            # Số liệu du lịch chính thức
+│           ├── province_mapping.py            # Quy đổi địa giới 63 sang 34 tỉnh/thành
+│           ├── resolver.py                    # Thuật toán tổng hợp chỉ tiêu số liệu
+│           ├── sync.py                        # Cơ chế đồng bộ vào DB
+│           └── ingest_months.py               # Lệnh nạp hàng loạt dữ liệu 10 tháng
 └── frontend/
-    ├── src/app/page.tsx
-    ├── src/components/VietnamMapD3.tsx
-    ├── src/components/MetricSelector.tsx
-    ├── src/components/ProvinceDetail.tsx
-    ├── src/lib/provinceApi.ts
-    └── public/data/
+    ├── Dockerfile                             # Multi-stage container build (Non-Root)
+    ├── package.json                           # Cấu hình phụ thuộc Node.js
+    ├── public/data/
+    │   └── vietnam-34-provinces.geojson       # Bản đồ GeoJSON 34 tỉnh/thành
+    └── src/
+        ├── app/
+        │   ├── layout.tsx                     # Root layout Next.js
+        │   ├── page.tsx                       # Màn hình chính điều phối 2 tab
+        │   └── globals.css                    # Toàn bộ CSS hệ thống & Dark Theme
+        ├── components/
+        │   ├── Header.tsx                     # Header dùng chung (Tabs, Filter, Song ngữ)
+        │   ├── VietnamMapD3.tsx               # Bản đồ tương tác D3 Zoom/Pan
+        │   ├── MetricSelector.tsx             # Thanh chọn 6 chỉ tiêu thống kê
+        │   ├── ProvinceDetail.tsx             # Panel chi tiết tỉnh/thành khi chọn
+        │   └── VerificationView.tsx           # Tab đối chứng số liệu chính thức
+        └── lib/
+            ├── i18n.tsx                       # Context quản lý đa ngôn ngữ VI/EN
+            └── provinceApi.ts                 # Client gọi API backend
 ```
 
-## Chạy Bằng Docker
+---
 
-Tạo `.env` từ file mẫu:
+## Hướng Dẫn Khởi Chạy Nhanh (Docker Compose)
+
+### 1. Thiết lập biến môi trường
+Sao chép file mẫu `.env.example` thành `.env`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Nếu trên máy host của bạn đã có sẵn PostgreSQL (hoặc một container khác) đang chạy trên cổng `5432`, mở file `.env` và đổi sang cổng khác (ví dụ: `5433`):
+> **Lưu ý chống xung đột cổng:** File `.env.example` mặc định ánh xạ cổng PostgreSQL host là `TRAVEL_VIEW_POSTGRES_PORT=5433` và Redis host là `TRAVEL_VIEW_REDIS_PORT=6380`. Điều này giúp bạn không bị lỗi trùng cổng nếu trên máy tính đã cài sẵn PostgreSQL (5432) hoặc Redis (6379). Mạng nội bộ giữa các container Docker vẫn giao tiếp an toàn qua cổng chuẩn `5432`.
 
-```env
-TRAVEL_VIEW_POSTGRES_PORT=5433
-```
-
-Khởi động stack:
+### 2. Khởi động toàn bộ hệ thống
+Khởi động 4 dịch vụ (`postgres`, `redis`, `backend`, `frontend`):
 
 ```powershell
 docker compose up --build
 ```
 
-Seed dữ liệu mẫu:
+### 3. Seed dữ liệu mẫu (Giữ nguyên chuẩn UTF-8 Tiếng Việt)
+Để tránh lỗi biến đổi font tiếng Việt thành dấu `?` do thiết lập encoding của PowerShell, hãy chạy lệnh seed trực tiếp từ file được mount bên trong container:
 
 ```powershell
 docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
 ```
 
-Sau khi chạy:
+### 4. Truy cập ứng dụng
+- **Giao diện Web Frontend**: `http://localhost:3000`
+- **FastAPI Backend**: `http://localhost:8000`
+- **Tài liệu API tương tác (Swagger UI)**: `http://localhost:8000/docs`
+- **Health check**: `http://localhost:8000/health`
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-- Swagger/OpenAPI: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/health`
+---
 
-### Xử Lý Sự Cố Thường Gặp (Troubleshooting)
+## Khởi Chạy Local Dành Cho Nhà Phát Triển
 
-#### Lỗi: Tên tỉnh/thành hiển thị dấu hỏi chấm `?` (ví dụ: `Th??nh ph??? Hu???`, `T???nh L??m ?????ng`)
-
-- **Nguyên nhân**: Khi dùng lệnh pipe của Windows PowerShell cũ (`Get-Content | ...`), biến `$OutputEncoding` mặc định là `US-ASCII`, dẫn đến toàn bộ ký tự tiếng Việt có dấu bị chuyển thành dấu `?` trước khi vào database.
-- **Cách xử lý**: Chạy lại lệnh seed bằng file mount trực tiếp trong container:
-  ```powershell
-  docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
-  ```
-  Lệnh này đọc file UTF-8 trực tiếp từ ổ đĩa container, đảm bảo giữ nguyên 100% tiếng Việt có dấu chuẩn Unicode.
-
-#### Lỗi: `Bind for 0.0.0.0:5432 failed: port is already allocated`
-
-
-- **Nguyên nhân**: Cổng `5432` trên máy host đang bị chiếm bởi một PostgreSQL service khác (như PostgreSQL cài trực tiếp trên Windows, WSL, hoặc một Docker container khác).
-- **Cách xử lý 1 (Khuyên dùng - Đổi cổng host)**:
-  1. Trong file `.env`, đổi cổng PostgreSQL của dự án:
-     ```env
-     TRAVEL_VIEW_POSTGRES_PORT=5433
-     ```
-     *(Nếu bạn chạy backend ở máy host không dùng Docker, hãy cập nhật luôn `DATABASE_URL` trong `.env` trỏ về port `5433`)*.
-  2. Chạy lại lệnh:
-     ```powershell
-     docker compose up --build
-     ```
-  *(Các container nội bộ giao tiếp với nhau qua Docker network với cổng mặc định 5432 nên toàn bộ hệ thống vẫn vận hành bình thường)*.
-
-- **Cách xử lý 2 (Tắt service/container đang chiếm cổng 5432)**:
-  - Nếu là container khác:
-    ```powershell
-    docker ps --filter "publish=5432"
-    docker stop <tên_hoặc_id_container>
-    ```
-  - Nếu là Windows Service của PostgreSQL:
-    ```powershell
-    Get-Service postgresql* | Stop-Service
-    ```
-
-#### Lỗi: `Bind for 0.0.0.0:6379 failed: port is already allocated`
-
-- Đổi cổng Redis trong file `.env`:
-  ```env
-  TRAVEL_VIEW_REDIS_PORT=6380
-  ```
-  Sau đó khởi động lại bằng `docker compose up --build`.
-
-
-## Chạy Local Từng Phần
-
-Backend:
+### Backend (Python 3.11+)
 
 ```powershell
 cd backend
@@ -138,7 +162,7 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-Frontend:
+### Frontend (Next.js & Node.js 18+)
 
 ```powershell
 cd frontend
@@ -146,33 +170,41 @@ npm ci
 npm run dev
 ```
 
-Frontend đọc API từ `NEXT_PUBLIC_API_URL`. Nếu không đặt biến này, code dùng
-mặc định `http://127.0.0.1:8000`.
+Frontend tự động đọc biến `NEXT_PUBLIC_API_URL` từ file môi trường (mặc định trỏ về `http://127.0.0.1:8000`).
 
-## API Hiện Có
+---
+
+## Đặc Tả API (API Reference)
+
+### 1. Danh sách điểm cuối (Endpoints)
 
 ```text
-GET /                         -> {"message": "Welcome to Travel View API"}
-GET /health                   -> {"status": "ok"}
-GET /provinces/stats/latest   -> danh sách thống kê mới nhất theo tỉnh/thành
+GET /                                                -> {"message": "Welcome to Travel View API"}
+GET /health                                          -> {"status": "ok"}
+GET /provinces/stats/latest?view_mode=...&date=...    -> Danh sách thống kê du lịch 34 tỉnh/thành
+GET /provinces/stats/dates?view_mode=...             -> Danh sách các mốc thời gian kèm metadata VNAT
 ```
 
-`GET /provinces/stats/latest` trả về danh sách:
+### 2. Cấu trúc dữ liệu phản hồi
 
-```ts
+#### `GET /provinces/stats/latest`
+```typescript
 interface ProvinceData {
-  id: string;
-  hcKeys: string[];
-  name: string;
-  region: string;
-  hasData?: boolean;
-  tourists_total: number;
-  tourists_domestic: number;
-  tourists_international: number;
-  overnight_stays_total: number;
-  hotels_count: number;
-  hotel_rooms_total: number;
-  landmarks: {
+  id: string;                               // Mã định danh tỉnh (vd: "vn-sg")
+  hcKeys: string[];                         // Danh sách hc-key GeoJSON (vd: ["VN-SG", "VN-43"])
+  name: string;                             // Tên tỉnh/thành phố mới
+  region: string;                           // Vùng kinh tế - xã hội
+  merged_from?: string;                     // Danh sách tỉnh cấu thành trước sáp nhập
+  record_date?: string;                     // Ngày chốt số liệu (YYYY-MM-DD)
+  citation_url?: string;                    // Đường dẫn văn bản báo cáo gốc VNAT
+  hasData?: boolean;                        // Trạng thái có số liệu hay không
+  tourists_total: number;                   // Tổng lượt khách
+  tourists_domestic: number;                // Khách nội địa
+  tourists_international: number;           // Khách quốc tế
+  overnight_stays_total: number;            // Lượt lưu trú
+  hotels_count: number;                     // Số lượng khách sạn
+  hotel_rooms_total: number;                // Số phòng khách sạn
+  landmarks: {                              // Danh lam thắng cảnh, di tích tiêu biểu
     name: string;
     type: "nature" | "culture" | "beach" | "city" | "heritage" | "other";
     description: string;
@@ -180,87 +212,72 @@ interface ProvinceData {
 }
 ```
 
-Frontend dùng contract này trong `frontend/src/lib/provinceApi.ts`.
-
-## Data Model
-
-- `Location`: vùng/tỉnh/thành, có `level`, `parent_id`, `slug`, `hc_key`.
-- `Statistic`: dữ liệu thời gian theo `location_id` và `record_date`.
-- `Landmark`: địa danh theo `location_id`, có category dạng enum.
-
-Migration tạo schema `travel_view`, bảng `location`, `statistic`, `landmark`,
-enum `landmarkcategory` và index `ix_stat_loc_date`.
-
-Seed mẫu nằm trong `supabase/snippets/travel-view.sql`.
-
-## Map Data
-
-Map đang render từ:
-
-```text
-frontend/public/data/vietnam-34-provinces.geojson
+#### `GET /provinces/stats/dates`
+```typescript
+interface DateOptionResponse {
+  date: string;                             // Ngày ghi nhận (YYYY-MM-DD)
+  label_vi: string;                         // Nhãn hiển thị tiếng Việt (Lũy kế)
+  label_short_vi: string;                   // Nhãn rút gọn (Tháng MM/YYYY)
+  label_monthly_vi: string;                 // Nhãn chế độ xem riêng trong tháng
+  label_en: string;                         // Nhãn hiển thị tiếng Anh (Cumulative)
+  label_short_en: string;                   // Nhãn rút gọn tiếng Anh
+  label_monthly_en: string;                 // Nhãn tháng tiếng Anh
+  is_latest: boolean;                       // Có phải mốc mới nhất hay không
+  source: string;                           // Cơ quan công bố (VNAT)
+  source_url: string;                       // Cổng dữ liệu VNAT
+  publication_title: string;                // Tiêu đề thông cáo báo chí
+  publication_date: string;                 // Ngày phát hành
+  report_url: string;                       // Đường dẫn bài báo cáo chi tiết
+}
 ```
 
-`VietnamMapD3.tsx` đọc GeoJSON từ `/data/vietnam-34-provinces.geojson`.
-Mỗi feature cần có `properties["hc-key"]`. Key này phải khớp với `hc_key` trong
-bảng `travel_view.location`.
+---
 
-Khi sửa bản đồ Việt Nam, giữ phần thể hiện Hoàng Sa và Trường Sa trong UI.
-Hiện `VietnamMapD3.tsx` có hai inset: `QD. Hoang Sa` gắn với Đà Nẵng (`VN48`)
-và `QD. Truong Sa` gắn với Khánh Hòa (`VN56`).
+## Xử Lý Sự Cố Thường Gặp (Troubleshooting)
 
-## Kubernetes
+### 1. Tên tỉnh/thành hiển thị dấu hỏi `?` trong database
+- **Nguyên nhân**: Dùng lệnh gõ `Get-Content | ...` trong PowerShell cũ khiến bảng mã đầu ra bị ép về US-ASCII trước khi pipe sang container PostgreSQL.
+- **Khắc phục**: Chạy lệnh seed trực tiếp từ file mount:
+  ```powershell
+  docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
+  ```
 
-`k8s/manifests.yaml` là manifest mẫu. Trước khi apply, tạo secret triển khai:
+### 2. Xung đột cổng `Bind for 0.0.0.0:5432 failed: port is already allocated`
+- **Nguyên nhân**: Máy tính của bạn đang chạy một PostgreSQL service khác trên cổng mặc định 5432.
+- **Khắc phục**: Mở file `.env`, điều chỉnh:
+  ```env
+  TRAVEL_VIEW_POSTGRES_PORT=5433
+  ```
+  Sau đó khởi động lại bằng `docker compose up --build`.
+
+### 3. Xung đột cổng Redis `Bind for 0.0.0.0:6379 failed`
+- **Khắc phục**: Đổi sang cổng khác trong `.env`:
+  ```env
+  TRAVEL_VIEW_REDIS_PORT=6380
+  ```
+
+---
+
+## Kiểm Tra Chất Lượng Mã Nguồn
+
+Trước khi tạo pull request hoặc kết luận thay đổi:
 
 ```powershell
-kubectl create secret generic travel-view-secrets `
-  --from-literal=POSTGRES_PASSWORD="<strong-password>" `
-  --from-literal=DATABASE_URL="postgresql+psycopg://postgres:<strong-password>@postgres:5432/travel_view"
-```
-
-Sau đó cập nhật image registry trong manifest rồi chạy:
-
-```powershell
-kubectl apply -f k8s/manifests.yaml
-```
-
-## Kiểm Tra
-
-Backend compile:
-
-```powershell
+# Kiểm tra cú pháp backend
 uv run python -m compileall backend\app
-```
 
-Frontend:
-
-```powershell
+# Kiểm tra lint và build frontend
 cd frontend
 npm run lint
 npm run build
 npm audit --audit-level=high
-```
 
-Docker config:
-
-```powershell
+# Kiểm tra cấu hình Docker Compose
 docker compose config
 ```
 
-## Contribution
+---
 
-1. Tạo branch nhỏ cho từng nhóm thay đổi.
-2. Không commit `.env`, secret thật, `node_modules/`, `.next/`, `.venv/`, cache.
-3. Giữ commit nhỏ theo module: backend, frontend, data, infra, docs.
-4. Trước khi mở PR, chạy các lệnh kiểm tra ở trên và cập nhật tài liệu nếu đổi
-   API, seed, map key hoặc lệnh setup.
+## Bản Quyền & Giấy Phép
 
-## Ghi Chú Cho Phát Triển Tiếp
-
-- Chưa có auth/admin route trong backend.
-- Chưa có router module riêng; mọi endpoint đang nằm trong `backend/app/main.py`.
-- `frontend/src/lib/provinceData.ts` là mock/legacy data và không được page chính
-  import trực tiếp.
-- `VietnamMap.tsx` có thể là hướng Highcharts cũ; màn hình chính dùng
-  `VietnamMapD3.tsx`.
+Dự án được phân phối theo giấy phép mã nguồn mở MIT License. Dữ liệu địa giới hành chính và ranh giới không gian tuân thủ quy chuẩn số liệu bản đồ quốc gia Việt Nam.

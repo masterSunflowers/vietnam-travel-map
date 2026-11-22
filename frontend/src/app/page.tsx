@@ -1,40 +1,69 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import Header from "@/components/Header";
 import VietnamMapD3 from "@/components/VietnamMapD3";
 import MetricSelector from "@/components/MetricSelector";
 import ProvinceDetail from "@/components/ProvinceDetail";
+import VerificationView from "@/components/VerificationView";
 import { useLanguage } from "@/lib/i18n";
 import {
+  DateOption,
   MetricKey,
   ProvinceData,
+  fetchAvailableDates,
   fetchProvinceStats,
   getProvinceByKey,
 } from "@/lib/provinceApi";
 
 export default function Home() {
   const { t, formatNumber } = useLanguage();
+  const [activeTab, setActiveTab] = useState<"map" | "verification">("map");
+  const [viewMode, setViewMode] = useState<"cumulative" | "monthly">("cumulative");
+  const [availableDates, setAvailableDates] = useState<DateOption[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>("tourists_total");
   const [provinces, setProvinces] = useState<ProvinceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvince, setSelectedProvince] = useState<ProvinceData | null>(null);
 
+  // 1. Fetch available dates on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadDates = async () => {
+      try {
+        const dates = await fetchAvailableDates();
+        if (!isMounted) return;
+        setAvailableDates(dates);
+        if (dates.length > 0) {
+          // Default to the first (latest) date
+          setSelectedDate(dates[0].date);
+        }
+      } catch (err) {
+        console.error("Failed to load available dates:", err);
+      }
+    };
+    loadDates();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Fetch stats whenever selectedDate or viewMode changes
   useEffect(() => {
     let isMounted = true;
 
     const loadProvinceStats = async () => {
       try {
         setIsLoading(true);
-        const result = await fetchProvinceStats();
+        const result = await fetchProvinceStats(selectedDate || undefined, viewMode);
         if (!isMounted) return;
         setProvinces(result);
         setError(null);
       } catch (err) {
         if (!isMounted) return;
-        const message =
-          err instanceof Error ? err.message : t.loadError;
+        const message = err instanceof Error ? err.message : t.loadError;
         setError(message);
       } finally {
         if (isMounted) {
@@ -47,7 +76,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [t.loadError]);
+  }, [selectedDate, viewMode, t.loadError]);
 
   const handleProvinceClick = useCallback(
     (hcKey: string) => {
@@ -72,81 +101,110 @@ export default function Home() {
       )
     : null;
 
+  const currentDateMeta = useMemo(() => {
+    return availableDates.find((d) => d.date === selectedDate);
+  }, [availableDates, selectedDate]);
+
   return (
     <>
-      <Header />
+      <Header
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        availableDates={availableDates}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
-      <main className="map-page">
-        <div className="map-left-panel">
-          <div className="map-card">
-            <VietnamMapD3
-              metric={selectedMetric}
-              provinces={provinces}
-              onProvinceClick={handleProvinceClick}
-            />
-          </div>
-        </div>
-
-        <div className="map-right-panel">
-          <div className="animate-fade-in" style={{ animationDelay: "0.05s" }}>
-            <div className="map-section-label">{t.displayMetric}</div>
-            <MetricSelector selected={selectedMetric} onChange={setSelectedMetric} />
-          </div>
-
-          <div className="map-stats-grid animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            <SummaryCard
-              icon="🌏"
-              label={t.totalTourists}
-              value={formatNumber(totalTourists)}
-              accent="var(--accent-teal)"
-            />
-            <SummaryCard
-              icon="🏨"
-              label={t.totalHotels}
-              value={formatNumber(totalHotels)}
-              accent="var(--accent-blue)"
-            />
-            <SummaryCard
-              icon="🛏️"
-              label={t.totalRooms}
-              value={formatNumber(totalRooms)}
-              accent="var(--accent-purple)"
-            />
-            <SummaryCard
-              icon="🏆"
-              label={t.topProvince}
-              value={topProvince ? topProvince.name.replace("Thanh pho ", "TP. ") : "N/A"}
-              accent="var(--accent-amber)"
-              subValue={topProvince ? `${formatNumber(topProvince.tourists_total)} ${t.visitorsSuffix}` : undefined}
-            />
-          </div>
-
-          {isLoading && (
-            <div style={{ marginTop: 12, color: "var(--text-muted)", fontSize: 13 }}>
-              {t.loadingData}
+      {activeTab === "map" ? (
+        <main className="map-page">
+          <div className="map-left-panel">
+            <div className="map-card">
+              <VietnamMapD3
+                metric={selectedMetric}
+                provinces={provinces}
+                onProvinceClick={handleProvinceClick}
+              />
             </div>
-          )}
-          {error && (
-            <div style={{ marginTop: 12, color: "#f87171", fontSize: 13 }}>
-              {error}
+          </div>
+
+          <div className="map-right-panel">
+            <div className="animate-fade-in" style={{ animationDelay: "0.05s" }}>
+              <div className="map-section-label">{t.displayMetric}</div>
+              <MetricSelector selected={selectedMetric} onChange={setSelectedMetric} />
             </div>
+
+            <div className="map-stats-grid animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <SummaryCard
+                icon="🌏"
+                label={t.totalTourists}
+                value={formatNumber(totalTourists)}
+                accent="var(--accent-teal)"
+                subValue={viewMode === "monthly" ? `• ${t.monthlyView}` : `• ${t.cumulativeView}`}
+              />
+              <SummaryCard
+                icon="🏨"
+                label={t.totalHotels}
+                value={formatNumber(totalHotels)}
+                accent="var(--accent-blue)"
+              />
+              <SummaryCard
+                icon="🛏️"
+                label={t.totalRooms}
+                value={formatNumber(totalRooms)}
+                accent="var(--accent-purple)"
+              />
+              <SummaryCard
+                icon="🏆"
+                label={t.topProvince}
+                value={topProvince ? topProvince.name.replace("Thanh pho ", "TP. ") : "N/A"}
+                accent="var(--accent-amber)"
+                subValue={topProvince ? `${formatNumber(topProvince.tourists_total)} ${t.visitorsSuffix}` : undefined}
+              />
+            </div>
+
+            {isLoading && (
+              <div style={{ marginTop: 12, color: "var(--text-muted)", fontSize: 13 }}>
+                {t.loadingData}
+              </div>
+            )}
+            {error && (
+              <div style={{ marginTop: 12, color: "#f87171", fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+          </div>
+        </main>
+      ) : (
+        <main className="verification-main-wrapper">
+          <VerificationView
+            provinces={provinces}
+            currentDateMeta={currentDateMeta}
+            isLoading={isLoading}
+            viewMode={viewMode}
+          />
+        </main>
+      )}
+
+      {/* Province Detail Drawer (on Map Tab) */}
+      {activeTab === "map" && (
+        <>
+          <ProvinceDetail province={selectedProvince} onClose={handleCloseDetail} />
+
+          {selectedProvince && (
+            <div
+              onClick={handleCloseDetail}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0, 0, 0, 0.4)",
+                zIndex: 90,
+                transition: "opacity 0.3s ease",
+              }}
+            />
           )}
-        </div>
-      </main>
-
-      <ProvinceDetail province={selectedProvince} onClose={handleCloseDetail} />
-
-      {selectedProvince && (
-        <div
-          onClick={handleCloseDetail}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.4)",
-            zIndex: 90,
-            transition: "opacity 0.3s ease",
-          }}
-        />
+        </>
       )}
     </>
   );

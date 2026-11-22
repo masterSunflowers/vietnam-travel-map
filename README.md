@@ -53,6 +53,12 @@ Tạo `.env` từ file mẫu:
 Copy-Item .env.example .env
 ```
 
+Nếu trên máy host của bạn đã có sẵn PostgreSQL (hoặc một container khác) đang chạy trên cổng `5432`, mở file `.env` và đổi sang cổng khác (ví dụ: `5433`):
+
+```env
+TRAVEL_VIEW_POSTGRES_PORT=5433
+```
+
 Khởi động stack:
 
 ```powershell
@@ -62,7 +68,7 @@ docker compose up --build
 Seed dữ liệu mẫu:
 
 ```powershell
-Get-Content -Raw supabase/snippets/travel-view.sql | docker compose exec -T postgres psql -U postgres -d travel_view
+docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
 ```
 
 Sau khi chạy:
@@ -71,6 +77,53 @@ Sau khi chạy:
 - Backend: `http://localhost:8000`
 - Swagger/OpenAPI: `http://localhost:8000/docs`
 - Health check: `http://localhost:8000/health`
+
+### Xử Lý Sự Cố Thường Gặp (Troubleshooting)
+
+#### Lỗi: Tên tỉnh/thành hiển thị dấu hỏi chấm `?` (ví dụ: `Th??nh ph??? Hu???`, `T???nh L??m ?????ng`)
+
+- **Nguyên nhân**: Khi dùng lệnh pipe của Windows PowerShell cũ (`Get-Content | ...`), biến `$OutputEncoding` mặc định là `US-ASCII`, dẫn đến toàn bộ ký tự tiếng Việt có dấu bị chuyển thành dấu `?` trước khi vào database.
+- **Cách xử lý**: Chạy lại lệnh seed bằng file mount trực tiếp trong container:
+  ```powershell
+  docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
+  ```
+  Lệnh này đọc file UTF-8 trực tiếp từ ổ đĩa container, đảm bảo giữ nguyên 100% tiếng Việt có dấu chuẩn Unicode.
+
+#### Lỗi: `Bind for 0.0.0.0:5432 failed: port is already allocated`
+
+
+- **Nguyên nhân**: Cổng `5432` trên máy host đang bị chiếm bởi một PostgreSQL service khác (như PostgreSQL cài trực tiếp trên Windows, WSL, hoặc một Docker container khác).
+- **Cách xử lý 1 (Khuyên dùng - Đổi cổng host)**:
+  1. Trong file `.env`, đổi cổng PostgreSQL của dự án:
+     ```env
+     TRAVEL_VIEW_POSTGRES_PORT=5433
+     ```
+     *(Nếu bạn chạy backend ở máy host không dùng Docker, hãy cập nhật luôn `DATABASE_URL` trong `.env` trỏ về port `5433`)*.
+  2. Chạy lại lệnh:
+     ```powershell
+     docker compose up --build
+     ```
+  *(Các container nội bộ giao tiếp với nhau qua Docker network với cổng mặc định 5432 nên toàn bộ hệ thống vẫn vận hành bình thường)*.
+
+- **Cách xử lý 2 (Tắt service/container đang chiếm cổng 5432)**:
+  - Nếu là container khác:
+    ```powershell
+    docker ps --filter "publish=5432"
+    docker stop <tên_hoặc_id_container>
+    ```
+  - Nếu là Windows Service của PostgreSQL:
+    ```powershell
+    Get-Service postgresql* | Stop-Service
+    ```
+
+#### Lỗi: `Bind for 0.0.0.0:6379 failed: port is already allocated`
+
+- Đổi cổng Redis trong file `.env`:
+  ```env
+  TRAVEL_VIEW_REDIS_PORT=6380
+  ```
+  Sau đó khởi động lại bằng `docker compose up --build`.
+
 
 ## Chạy Local Từng Phần
 

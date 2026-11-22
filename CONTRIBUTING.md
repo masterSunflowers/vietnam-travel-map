@@ -2,7 +2,7 @@
 
 ## Setup
 
-1. Copy `.env.example` to `.env` for local development.
+1. Copy `.env.example` to `.env` for local development. Nếu cổng `5432` hoặc `6379` trên máy của bạn đã được dùng bởi service khác, điều chỉnh `TRAVEL_VIEW_POSTGRES_PORT` (vd: `5433`) hoặc `TRAVEL_VIEW_REDIS_PORT` trong file `.env`.
 2. Start the stack:
 
 ```powershell
@@ -12,8 +12,9 @@ docker compose up --build
 3. Seed the sample tourism data:
 
 ```powershell
-Get-Content -Raw supabase/snippets/travel-view.sql | docker compose exec -T postgres psql -U postgres -d travel_view
+docker compose exec -T postgres psql -U postgres -d travel_view -f /snippets/travel-view.sql
 ```
+
 
 4. Open the app at `http://localhost:3000`.
 

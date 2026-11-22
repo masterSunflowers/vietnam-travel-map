@@ -8,6 +8,39 @@ export type Language = "vi" | "en";
 export interface Translations {
   appTitle: string;
   liveData: string;
+  mapTab: string;
+  verificationTab: string;
+  timeFilter: string;
+  cumulativeView: string;
+  monthlyView: string;
+  perspective: string;
+  cumulativeBadge: string;
+  monthlyBadge: string;
+  sourceBannerTitle: string;
+  sourceBannerDesc: string;
+  viewVnatPortal: string;
+  viewGsoPortal: string;
+  viewOfficialPost: string;
+  pubAgency: string;
+  pubTitle: string;
+  pubDate: string;
+  searchPlaceholder: string;
+  allProvincesCount: string;
+  colNo: string;
+  colProvince: string;
+  colMergedFrom: string;
+  colTotalTourists: string;
+  colDomestic: string;
+  colIntl: string;
+  colIntlRatio: string;
+  colOvernight: string;
+  colHotels: string;
+  colRooms: string;
+  colProof: string;
+  viewProof: string;
+  tableScrollHint: string;
+  noResultsFound: string;
+  timePeriod: string;
   displayMetric: string;
   totalTourists: string;
   totalHotels: string;
@@ -35,6 +68,39 @@ export const dictionaries: Record<Language, Translations> = {
   vi: {
     appTitle: "Bản đồ du lịch Việt Nam",
     liveData: "Dữ liệu trực tiếp",
+    mapTab: "Bản đồ du lịch",
+    verificationTab: "Tài liệu đối chứng",
+    timeFilter: "Kỳ dữ liệu",
+    cumulativeView: "Lũy kế",
+    monthlyView: "Trong tháng",
+    perspective: "Góc nhìn",
+    cumulativeBadge: "SỐ LIỆU LŨY KẾ ĐẦU NĂM (YTD)",
+    monthlyBadge: "SỐ LIỆU PHÁT SINH TRONG THÁNG",
+    sourceBannerTitle: "Nguồn tài liệu & Báo cáo thống kê chính thức",
+    sourceBannerDesc: "Số liệu được đối soát từ Cục Du lịch Quốc gia Việt Nam (VNAT) và Tổng cục Thống kê (GSO).",
+    viewVnatPortal: "Cổng Thống kê VNAT",
+    viewGsoPortal: "Cơ sở Dữ liệu Du lịch",
+    viewOfficialPost: "Xem văn bản số liệu chính thức",
+    pubAgency: "Cơ quan phát hành",
+    pubTitle: "Ấn phẩm báo cáo",
+    pubDate: "Ngày công bố",
+    searchPlaceholder: "Tìm kiếm tỉnh / thành phố...",
+    allProvincesCount: "tỉnh / thành phố",
+    colNo: "STT",
+    colProvince: "Tỉnh / Thành phố mới",
+    colMergedFrom: "Đơn vị sáp nhập cấu thành",
+    colTotalTourists: "Tổng lượt khách",
+    colDomestic: "Khách nội địa",
+    colIntl: "Khách quốc tế",
+    colIntlRatio: "Tỷ lệ QT",
+    colOvernight: "Khách lưu trú",
+    colHotels: "Khách sạn",
+    colRooms: "Số phòng",
+    colProof: "Minh chứng",
+    viewProof: "Kiểm chứng",
+    tableScrollHint: "↔ Cuộn ngang để xem đủ 11 chỉ tiêu & minh chứng",
+    noResultsFound: "Không tìm thấy tỉnh thành phù hợp với từ khóa.",
+    timePeriod: "Thời gian thống kê",
     displayMetric: "Chỉ tiêu hiển thị",
     totalTourists: "Tổng lượt khách",
     totalHotels: "Tổng khách sạn",
@@ -81,6 +147,39 @@ export const dictionaries: Record<Language, Translations> = {
   en: {
     appTitle: "Vietnam Travel Map",
     liveData: "Live Data",
+    mapTab: "Travel Map",
+    verificationTab: "Verification",
+    timeFilter: "Period",
+    cumulativeView: "Cumulative",
+    monthlyView: "Monthly",
+    perspective: "Perspective",
+    cumulativeBadge: "CUMULATIVE YEAR-TO-DATE (YTD)",
+    monthlyBadge: "SINGLE MONTH RECORD",
+    sourceBannerTitle: "Official Data Sources & Statistical Releases",
+    sourceBannerDesc: "Statistics cross-verified against official releases from VNAT and GSO.",
+    viewVnatPortal: "VNAT Statistics Portal",
+    viewGsoPortal: "Tourism Database Portal",
+    viewOfficialPost: "View Official Release",
+    pubAgency: "Issuing Agency",
+    pubTitle: "Publication",
+    pubDate: "Release Date",
+    searchPlaceholder: "Search province / city...",
+    allProvincesCount: "provinces",
+    colNo: "No.",
+    colProvince: "Merged Province",
+    colMergedFrom: "Constituent Provinces",
+    colTotalTourists: "Total Tourists",
+    colDomestic: "Domestic",
+    colIntl: "International",
+    colIntlRatio: "Intl %",
+    colOvernight: "Overnight Stays",
+    colHotels: "Hotels",
+    colRooms: "Rooms",
+    colProof: "Proof",
+    viewProof: "Verify",
+    tableScrollHint: "↔ Scroll horizontally to view all 11 indicators & proof",
+    noResultsFound: "No provinces match your search query.",
+    timePeriod: "Statistical Period",
     displayMetric: "Display Metric",
     totalTourists: "Total Visitors",
     totalHotels: "Total Hotels",

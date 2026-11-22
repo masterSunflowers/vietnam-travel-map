@@ -9,6 +9,9 @@ export interface ProvinceData {
   hcKeys: string[];
   name: string;
   region: string;
+  merged_from?: string;
+  record_date?: string;
+  citation_url?: string;
   hasData?: boolean;
   tourists_total: number;
   tourists_domestic: number;
@@ -17,6 +20,22 @@ export interface ProvinceData {
   hotels_count: number;
   hotel_rooms_total: number;
   landmarks: ProvinceLandmark[];
+}
+
+export interface DateOption {
+  date: string;
+  label_vi: string;
+  label_short_vi?: string;
+  label_monthly_vi?: string;
+  label_en: string;
+  label_short_en?: string;
+  label_monthly_en?: string;
+  is_latest: boolean;
+  source: string;
+  source_url: string;
+  publication_title: string;
+  publication_date: string;
+  report_url: string;
 }
 
 export type MetricKey =
@@ -48,8 +67,30 @@ export const metricUnits: Record<MetricKey, string> = {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8000";
 
-export async function fetchProvinceStats(): Promise<ProvinceData[]> {
-  const response = await fetch(`${apiBaseUrl}/provinces/stats/latest`, {
+export async function fetchAvailableDates(): Promise<DateOption[]> {
+  const response = await fetch(`${apiBaseUrl}/provinces/stats/dates`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load available dates: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as DateOption[];
+  return payload;
+}
+
+export async function fetchProvinceStats(
+  date?: string,
+  viewMode: "cumulative" | "monthly" = "cumulative"
+): Promise<ProvinceData[]> {
+  const params = new URLSearchParams();
+  if (date) params.append("date", date);
+  params.append("view_mode", viewMode);
+
+  const url = `${apiBaseUrl}/provinces/stats/latest?${params.toString()}`;
+
+  const response = await fetch(url, {
     cache: "no-store",
   });
 

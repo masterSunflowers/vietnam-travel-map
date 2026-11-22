@@ -1,9 +1,15 @@
+import sys
 import time
+from pathlib import Path
+
+# Ensure project root is in sys.path when executed directly as a script
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
+
 
 
 def wait_for_database(max_attempts: int = 30, delay_seconds: float = 1.0) -> None:

@@ -11,6 +11,8 @@ services:
       - "${TRAVEL_VIEW_POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./supabase/snippets:/snippets:ro
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-travel_view}"]
       interval: 5s
@@ -41,6 +43,8 @@ services:
       DATABASE_URL: postgresql+psycopg://${TRAVEL_VIEW_POSTGRES_USER:-postgres}:${TRAVEL_VIEW_POSTGRES_PASSWORD:-postgres}@postgres:5432/${TRAVEL_VIEW_POSTGRES_DB:-travel_view}
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      PYTHONPATH: /app
+
     depends_on:
       postgres:
         condition: service_healthy

@@ -2,74 +2,116 @@
 
 import React from "react";
 import { useLanguage } from "@/lib/i18n";
+import { DateOption } from "@/lib/provinceApi";
 
-const Header = () => {
+interface HeaderProps {
+  activeTab?: "map" | "verification";
+  onTabChange?: (tab: "map" | "verification") => void;
+  availableDates?: DateOption[];
+  selectedDate?: string;
+  onDateChange?: (date: string) => void;
+  viewMode?: "cumulative" | "monthly";
+  onViewModeChange?: (mode: "cumulative" | "monthly") => void;
+}
+
+const Header: React.FC<HeaderProps> = ({
+  activeTab = "map",
+  onTabChange,
+  availableDates = [],
+  selectedDate,
+  onDateChange,
+  viewMode = "cumulative",
+  onViewModeChange,
+}) => {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: "rgba(11, 15, 26, 0.8)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid var(--border-subtle)",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1400,
-          margin: "0 auto",
-          padding: "0 32px",
-          height: 64,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+    <header className="app-header">
+      <div className="header-inner">
         {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Logo icon */}
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background:
-                "linear-gradient(135deg, rgba(45, 212, 191, 0.2) 0%, rgba(56, 189, 248, 0.2) 100%)",
-              border: "1px solid rgba(45, 212, 191, 0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 20,
-            }}
-          >
+        <div className="header-brand">
+          <div className="header-brand-icon">
             🗺️
           </div>
           <div>
-            <h1
-              style={{
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-                background:
-                  "linear-gradient(135deg, #2dd4bf 0%, #38bdf8 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <h1 className="header-brand-title">
               {t.appTitle}
             </h1>
           </div>
         </div>
 
-        {/* Right side: Language Switcher & Status */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        {/* Center: 2 Tabs Switcher */}
+        {onTabChange && (
+          <nav className="tab-switcher" aria-label="Tab Navigation">
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === "map" ? "active" : ""}`}
+              onClick={() => onTabChange("map")}
+            >
+              <span className="tab-icon">🗺️</span>
+              <span className="tab-label">{t.mapTab}</span>
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === "verification" ? "active" : ""}`}
+              onClick={() => onTabChange("verification")}
+            >
+              <span className="tab-icon">📋</span>
+              <span className="tab-label">{t.verificationTab}</span>
+            </button>
+          </nav>
+        )}
+
+        {/* Right side: View Mode Toggle, Time Filter, Language & Status */}
+        <div className="header-actions">
+          {/* Perspective View Mode Toggle (Lũy kế vs Trong tháng) */}
+          {onViewModeChange && (
+            <div className="view-mode-switcher" title={t.perspective}>
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === "cumulative" ? "active" : ""}`}
+                onClick={() => onViewModeChange("cumulative")}
+              >
+                <span>📊</span>
+                <span>{t.cumulativeView}</span>
+              </button>
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === "monthly" ? "active" : ""}`}
+                onClick={() => onViewModeChange("monthly")}
+              >
+                <span>📅</span>
+                <span>{t.monthlyView}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Shared Time Filter Droplist */}
+          {availableDates.length > 0 && onDateChange && (
+            <div className="time-filter-wrapper">
+              <span className="time-filter-icon">🗓️</span>
+              <select
+                className="time-filter-select"
+                value={selectedDate}
+                onChange={(e) => onDateChange(e.target.value)}
+                aria-label={t.timeFilter}
+              >
+                {availableDates.map((item) => {
+                  const label =
+                    language === "vi"
+                      ? item.label_short_vi || item.label_vi
+                      : item.label_short_en || item.label_en;
+
+                  return (
+                    <option key={item.date} value={item.date}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
+
           {/* Language Toggle Button */}
           <div className="language-switcher">
             <button
@@ -92,26 +134,9 @@ const Header = () => {
           </div>
 
           {/* Connection Status */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-              color: "var(--text-muted)",
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "var(--accent-emerald)",
-                display: "inline-block",
-                boxShadow: "0 0 8px rgba(52, 211, 153, 0.4)",
-              }}
-            />
-            {t.liveData}
+          <div className="header-status-badge">
+            <span className="header-status-dot" />
+            <span className="header-status-text">{t.liveData}</span>
           </div>
         </div>
       </div>

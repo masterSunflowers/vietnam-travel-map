@@ -4,22 +4,23 @@ Aggregates official statistics from 63 traditional provinces into the 34 merged 
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any
+
 from sqlmodel import Session, select
 
 from app.crawler.official_dataset import OFFICIAL_PROVINCE_STATS
-from app.crawler.province_mapping import resolve_merged_code, MERGED_PROVINCES
+from app.crawler.province_mapping import MERGED_PROVINCES, resolve_merged_code
 from app.models.domain import Location
 
 
 def aggregate_province_statistics(
     growth_multiplier: float = 1.0,
-) -> Dict[str, Dict[str, int]]:
+) -> dict[str, dict[str, int]]:
     """
     Aggregates statistics from 63 traditional provinces into 34 merged provinces.
     Returns a dictionary keyed by merged province code (e.g. 'HN', 'HCM', 'DN').
     """
-    aggregated: Dict[str, Dict[str, int]] = defaultdict(
+    aggregated: dict[str, dict[str, int]] = defaultdict(
         lambda: {
             "tourists_total": 0,
             "tourists_domestic": 0,
@@ -49,7 +50,7 @@ def aggregate_province_statistics(
 def resolve_to_database_locations(
     session: Session,
     growth_multiplier: float = 1.0,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Maps aggregated statistics to actual database Location IDs.
     Returns a list of dicts with 'location_id', 'code', 'name', and statistic metrics.
@@ -57,10 +58,10 @@ def resolve_to_database_locations(
     # Fetch all province locations from travel_view.location
     statement = select(Location).where(Location.level == "province")
     locations = session.exec(statement).all()
-    loc_by_code: Dict[str, Location] = {loc.code: loc for loc in locations if loc.code}
+    loc_by_code: dict[str, Location] = {loc.code: loc for loc in locations if loc.code}
 
     aggregated = aggregate_province_statistics(growth_multiplier=growth_multiplier)
-    resolved_records: List[Dict[str, Any]] = []
+    resolved_records: list[dict[str, Any]] = []
 
     for code, metrics in aggregated.items():
         loc = loc_by_code.get(code)

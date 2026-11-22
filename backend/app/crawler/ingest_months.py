@@ -3,15 +3,16 @@ Script to ingest official monthly tourism data for 2026 (Jan to Oct),
 purge legacy seed data, and establish a verifiable time-series dataset.
 """
 
-from datetime import date
 import logging
-from typing import Any, Dict
-from sqlmodel import Session, select, delete
+from datetime import date
+from typing import Any
 
-from app.db.database import engine
-from app.models.domain import Statistic, Location
+from sqlmodel import Session, delete, select
+
 from app.crawler.monthly_dataset import MONTHLY_MILESTONES
 from app.crawler.resolver import resolve_to_database_locations
+from app.db.database import engine
+from app.models.domain import Statistic
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("travel_view.crawler.ingest_months")
@@ -24,11 +25,11 @@ def purge_legacy_seed_data(session: Session) -> int:
     stmt = delete(Statistic).where(Statistic.record_date.in_(legacy_dates))
     result = session.exec(stmt)
     session.commit()
-    logger.info(f"Purged legacy seed records.")
+    logger.info("Purged legacy seed records.")
     return getattr(result, "rowcount", 0)
 
 
-def ingest_monthly_timeseries(session: Session) -> Dict[str, Any]:
+def ingest_monthly_timeseries(session: Session) -> dict[str, Any]:
     """Ingests all 10 monthly milestones for 2026 into travel_view.statistic."""
     purge_legacy_seed_data(session)
 
@@ -103,5 +104,6 @@ def main():
 
 
 if __name__ == "__main__":
-    from typing import Dict, Any
+    from typing import Any
+
     main()

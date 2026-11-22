@@ -5,13 +5,14 @@ Usage:
 """
 
 import argparse
-from datetime import date
 import logging
 import sys
+from datetime import date
 
-from app.db.database import engine
 from sqlmodel import Session
+
 from app.crawler.sync import run_sync_pipeline
+from app.db.database import engine
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,7 +41,10 @@ def main():
         try:
             target_date = date.fromisoformat(args.date)
         except ValueError:
-            print(f"Error: Invalid date format '{args.date}'. Expected YYYY-MM-DD.", file=sys.stderr)
+            print(
+                f"Error: Invalid date format '{args.date}'. Expected YYYY-MM-DD.",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     print("=================================================================")

@@ -1,13 +1,13 @@
 """
-Official baseline statistics from Vietnam General Statistics Office (GSO) 
+Official baseline statistics from Vietnam General Statistics Office (GSO)
 and Vietnam National Authority of Tourism (VNAT) Yearbooks.
 Contains verified province-level tourism metrics for all 63 provinces.
 """
 
-from typing import Dict, Any
+from typing import Any
 
 # Official statistics for all 63 provinces of Vietnam
-OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
+OFFICIAL_PROVINCE_STATS: dict[str, dict[str, Any]] = {
     # Northern Delta & Capital
     "Hà Nội": {
         "tourists_total": 24000000,
@@ -113,7 +113,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 480,
         "hotel_rooms_total": 6200,
     },
-
     # Northeast & Northwest
     "Quảng Ninh": {
         "tourists_total": 15500000,
@@ -211,7 +210,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 185,
         "hotel_rooms_total": 2400,
     },
-
     # North Central Coast
     "Thanh Hóa": {
         "tourists_total": 12400000,
@@ -261,7 +259,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 860,
         "hotel_rooms_total": 14000,
     },
-
     # South Central Coast
     "Đà Nẵng": {
         "tourists_total": 7400000,
@@ -327,7 +324,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 620,
         "hotel_rooms_total": 18200,
     },
-
     # Central Highlands (Tây Nguyên)
     "Kon Tum": {
         "tourists_total": 1300000,
@@ -369,7 +365,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 3100,
         "hotel_rooms_total": 40500,
     },
-
     # Southeast (Đông Nam Bộ)
     "Hồ Chí Minh": {
         "tourists_total": 35000000,
@@ -419,7 +414,6 @@ OFFICIAL_PROVINCE_STATS: Dict[str, Dict[str, Any]] = {
         "hotels_count": 280,
         "hotel_rooms_total": 4600,
     },
-
     # Mekong Delta (Đồng bằng sông Cửu Long)
     "Long An": {
         "tourists_total": 1000000,

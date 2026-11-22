@@ -4,11 +4,12 @@ Sync service to coordinate scraping, resolving, and persisting official tourism 
 
 import logging
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any
+
 from sqlmodel import Session, select
 
-from app.crawler.vnat_client import fetch_latest_vnat_release
 from app.crawler.resolver import resolve_to_database_locations
+from app.crawler.vnat_client import fetch_latest_vnat_release
 from app.models.domain import Statistic
 
 logger = logging.getLogger("travel_view.crawler.sync")
@@ -16,9 +17,9 @@ logger = logging.getLogger("travel_view.crawler.sync")
 
 def run_sync_pipeline(
     session: Session,
-    target_date: Optional[date] = None,
+    target_date: date | None = None,
     apply_growth: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Executes the full tourism statistics synchronization pipeline:
     1. Fetches official release metadata from VNAT.
@@ -33,7 +34,7 @@ def run_sync_pipeline(
     # Step 1: Query VNAT live release
     vnat_info = fetch_latest_vnat_release()
     growth_rate = vnat_info.get("international_growth_rate", 0.0)
-    
+
     # Calculate multiplier if growth rate detected (e.g. 13.8% -> 1.138)
     multiplier = 1.0
     if apply_growth and growth_rate > 0:

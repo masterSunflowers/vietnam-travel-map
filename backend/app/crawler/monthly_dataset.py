@@ -3,9 +3,9 @@ Monthly official publication milestones from VNAT for 2026.
 Contains official releases, publication metadata, and exact article links.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
-MONTHLY_MILESTONES: List[Dict[str, Any]] = [
+MONTHLY_MILESTONES: list[dict[str, Any]] = [
     {
         "month": 10,
         "record_date": "2026-10-31",

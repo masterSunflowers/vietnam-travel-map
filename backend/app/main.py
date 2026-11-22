@@ -1,19 +1,17 @@
 from collections import defaultdict
 from datetime import date as dt_date
-from typing import List, Optional
 
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import and_, func
 from sqlmodel import Session, select
 
 from app.core.config import settings
-from app.db.database import get_session
-from app.models.domain import Location, Landmark, Statistic
-from app.crawler.sync import run_sync_pipeline
-from app.crawler.province_mapping import MERGED_PROVINCES
 from app.crawler.monthly_dataset import MONTHLY_MILESTONES
+from app.crawler.province_mapping import MERGED_PROVINCES
+from app.crawler.sync import run_sync_pipeline
+from app.db.database import get_session
+from app.models.domain import Landmark, Location, Statistic
 
 app = FastAPI(title="Travel View API", version="1.0.0")
 
@@ -25,9 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Travel View API"}
+
 
 @app.get("/health")
 def health_check():
@@ -43,11 +43,11 @@ class ProvinceLandmarkResponse(BaseModel):
 class DateOptionResponse(BaseModel):
     date: str
     label_vi: str
-    label_short_vi: Optional[str] = None
-    label_monthly_vi: Optional[str] = None
+    label_short_vi: str | None = None
+    label_monthly_vi: str | None = None
     label_en: str
-    label_short_en: Optional[str] = None
-    label_monthly_en: Optional[str] = None
+    label_short_en: str | None = None
+    label_monthly_en: str | None = None
     is_latest: bool
     source: str
     source_url: str
@@ -58,36 +58,34 @@ class DateOptionResponse(BaseModel):
 
 class ProvinceStatsResponse(BaseModel):
     id: str
-    hcKeys: List[str]
+    hcKeys: list[str]
     name: str
     region: str
-    merged_from: Optional[str] = None
-    record_date: Optional[str] = None
-    citation_url: Optional[str] = None
+    merged_from: str | None = None
+    record_date: str | None = None
+    citation_url: str | None = None
     tourists_total: int
     tourists_domestic: int
     tourists_international: int
     overnight_stays_total: int
     hotels_count: int
     hotel_rooms_total: int
-    landmarks: List[ProvinceLandmarkResponse]
+    landmarks: list[ProvinceLandmarkResponse]
 
 
-def parse_hc_keys(value: str | None) -> List[str]:
+def parse_hc_keys(value: str | None) -> list[str]:
     if not value:
         return []
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-@app.get("/provinces/stats/dates", response_model=List[DateOptionResponse])
+@app.get("/provinces/stats/dates", response_model=list[DateOptionResponse])
 def get_available_dates(session: Session = Depends(get_session)):
     """
     Get all available record dates in database with publication metadata.
     """
     dates = session.exec(
-        select(Statistic.record_date)
-        .distinct()
-        .order_by(Statistic.record_date.desc())
+        select(Statistic.record_date).distinct().order_by(Statistic.record_date.desc())
     ).all()
 
     if not dates:
@@ -95,11 +93,11 @@ def get_available_dates(session: Session = Depends(get_session)):
 
     latest_date = dates[0]
     milestone_by_date = {m["record_date"]: m for m in MONTHLY_MILESTONES}
-    result: List[DateOptionResponse] = []
+    result: list[DateOptionResponse] = []
 
     for d in dates:
         d_str = d.isoformat()
-        is_latest = (d == latest_date)
+        is_latest = d == latest_date
         meta = milestone_by_date.get(d_str)
 
         if meta:
@@ -142,10 +140,15 @@ def get_available_dates(session: Session = Depends(get_session)):
     return result
 
 
-@app.get("/provinces/stats/latest", response_model=List[ProvinceStatsResponse])
+@app.get("/provinces/stats/latest", response_model=list[ProvinceStatsResponse])
 def get_latest_province_stats(
-    date: Optional[str] = Query(default=None, description="Filter statistics by record date (YYYY-MM-DD)"),
-    view_mode: str = Query(default="cumulative", description="Perspective: 'cumulative' (YTD) or 'monthly' (single month)"),
+    date: str | None = Query(
+        default=None, description="Filter statistics by record date (YYYY-MM-DD)"
+    ),
+    view_mode: str = Query(
+        default="cumulative",
+        description="Perspective: 'cumulative' (YTD) or 'monthly' (single month)",
+    ),
     session: Session = Depends(get_session),
 ):
     all_dates = session.exec(
@@ -196,11 +199,11 @@ def get_latest_province_stats(
         ).all()
         stats_prev = {s.location_id: s for s in stats_prev_rows}
 
-    landmark_rows = []
+    landmark_rows: list[Landmark] = []
     if location_ids:
-        landmark_rows = session.exec(
-            select(Landmark).where(Landmark.location_id.in_(location_ids))
-        ).all()
+        landmark_rows = list(
+            session.exec(select(Landmark).where(Landmark.location_id.in_(location_ids))).all()
+        )
 
     landmarks_by_location: dict[int, list[Landmark]] = defaultdict(list)
     for lm in landmark_rows:
@@ -215,7 +218,7 @@ def get_latest_province_stats(
         else "https://vietnamtourism.gov.vn/statistic"
     )
 
-    response: List[ProvinceStatsResponse] = []
+    response: list[ProvinceStatsResponse] = []
     for location in locations:
         if location.id is None:
             continue
@@ -225,7 +228,9 @@ def get_latest_province_stats(
             region = location.parent.name
 
         sub_provinces = MERGED_PROVINCES.get(location.code, {}).get("sub_provinces", [])
-        resolved_merged_from = location.merged_from or (", ".join(sub_provinces) if sub_provinces else None)
+        resolved_merged_from = location.merged_from or (
+            ", ".join(sub_provinces) if sub_provinces else None
+        )
 
         stat_c = stats_curr.get(location.id)
         stat_p = stats_prev.get(location.id) if prev_date else None
@@ -233,8 +238,14 @@ def get_latest_province_stats(
         if view_mode == "monthly" and prev_date and stat_c and stat_p:
             t_total = max(0, (stat_c.tourists_total or 0) - (stat_p.tourists_total or 0))
             t_dom = max(0, (stat_c.tourists_domestic or 0) - (stat_p.tourists_domestic or 0))
-            t_intl = max(0, (stat_c.tourists_international or 0) - (stat_p.tourists_international or 0))
-            t_overnight = max(0, (stat_c.overnight_stays_total or 0) - (stat_p.overnight_stays_total or 0))
+            t_intl = max(
+                0,
+                (stat_c.tourists_international or 0) - (stat_p.tourists_international or 0),
+            )
+            t_overnight = max(
+                0,
+                (stat_c.overnight_stays_total or 0) - (stat_p.overnight_stays_total or 0),
+            )
         elif stat_c:
             t_total = stat_c.tourists_total or 0
             t_dom = stat_c.tourists_domestic or 0
@@ -304,4 +315,3 @@ def trigger_sync_stats(
         session=session,
         apply_growth=not no_growth,
     )
-

@@ -9,7 +9,7 @@ import logging
 import re
 import ssl
 import urllib.request
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger("travel_view.crawler.vnat")
 
@@ -17,12 +17,12 @@ VNAT_CAT_URL = "https://public.vietnamtourism.gov.vn/cat/71?type=1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 
-def fetch_latest_vnat_release(timeout: int = 10) -> Dict[str, Any]:
+def fetch_latest_vnat_release(timeout: int = 10) -> dict[str, Any]:
     """
     Fetch the latest official tourism release from VNAT public portal.
     Gracefully handles network errors or parsing anomalies with a fallback response.
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "status": "fallback",
         "source": "Cục Du lịch Quốc gia Việt Nam (VNAT)",
         "latest_report_title": "Số liệu thống kê du lịch Việt Nam",
